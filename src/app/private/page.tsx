@@ -7,7 +7,7 @@ import { SITE, VENUE } from "@/lib/constants";
 export const metadata: Metadata = {
   title: "Private Events & Buyouts — Bacara Club Miami Beach",
   description:
-    "Host your private event, corporate buyout, album release, or artist afterparty at Bacara Club. 4,200 square feet in the heart of Miami Beach with full broadcast infrastructure for streaming-friendly events.",
+    "Host your private event, corporate buyout, album release, or artist afterparty at Bacara Club in Miami Beach. Full broadcast infrastructure included for streaming-friendly events.",
   alternates: { canonical: `${SITE.url}/private` },
 };
 

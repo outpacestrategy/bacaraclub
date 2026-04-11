@@ -54,8 +54,8 @@ export default function ContactPage() {
                   · On Air
                 </span>
               </li>
-              <li>Thursday — 10 PM – 5 AM</li>
-              <li>Friday — 10 PM – 5 AM</li>
+              <li>Thursday — Closed</li>
+              <li>Friday — Closed</li>
               <li>
                 <span className="text-fg">Saturday — 10 PM – 5 AM</span>
                 <span className="ml-2 text-[11px] uppercase tracking-[0.14em] text-accent">

@@ -23,8 +23,8 @@ export const VENUE = {
   get fullAddress() {
     return `${this.street}, ${this.city}, ${this.region} ${this.postalCode}`;
   },
-  // Bacara operates Wed-Sat. Overnight hours cross midnight.
-  hoursHuman: "Wed – Sat · 10:00 PM – 5:00 AM",
+  // Bacara operates Wednesday and Saturday only. Overnight hours cross midnight.
+  hoursHuman: "Wed & Sat · 10:00 PM – 5:00 AM",
   // Placeholder — replace once Drew confirms the real number (Open Question #5 in CLAUDE.md).
   phoneDisplay: null as string | null,
   phoneTel: null as string | null,

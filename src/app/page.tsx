@@ -5,7 +5,6 @@ import { Experience3DCarousel } from "@/components/sections/Experience3DCarousel
 import { FAQ } from "@/components/sections/FAQ";
 import { Hero } from "@/components/sections/Hero";
 import { OpeningHours } from "@/components/sections/OpeningHours";
-import { Stats } from "@/components/sections/Stats";
 import { Streamers } from "@/components/sections/Streamers";
 import { UpcomingEvents } from "@/components/sections/UpcomingEvents";
 
@@ -17,11 +16,10 @@ import { UpcomingEvents } from "@/components/sections/UpcomingEvents";
  *
  *   1. Hero                    — autoplay video background + bonded CTAs
  *   2. Upcoming Events         — snap-scroll card carousel
- *   3. Stats                   — animated counters (Tables / Sq Ft / Capacity)
- *   4. Meet the Streamers      — WebGL curved gallery (OGL)
- *   5. Opening Hours           — 7-day grid, today highlighted
- *   6. Experience              — CSS 3D ring gallery
- *   7. FAQ                     — accordion + FAQPage JSON-LD (the GEO lever)
+ *   3. Meet the Streamers      — WebGL curved gallery (OGL)
+ *   4. Opening Hours           — 7-day grid, today highlighted
+ *   5. Experience              — CSS 3D ring gallery
+ *   6. FAQ                     — accordion + FAQPage JSON-LD (the GEO lever)
  *
  * The FAQ section lives on the home page specifically for the brand-level query
  * cluster ("Bacara Club", "streaming nightclub Miami"). When the dedicated /faq page
@@ -39,7 +37,6 @@ export default function Home() {
 
       <Hero />
       <UpcomingEvents />
-      <Stats />
       <Streamers />
       <OpeningHours />
       <Experience3DCarousel />

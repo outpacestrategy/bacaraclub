@@ -10,7 +10,6 @@
  * a pre-launch QA pass can grep for it and verify nothing placeholder ships to production.
  *
  * Open questions tracked in CLAUDE.md:
- *  - Real capacity numbers, table count, square footage (Stats)
  *  - Real streamer partner list (Streamers)
  *  - Real upcoming event calendar (UpcomingEvents)
  *  - Real photography for the Experience carousel
@@ -74,22 +73,6 @@ export const PLACEHOLDER_EVENTS: readonly PlaceholderEvent[] = [
     host: "Streamer Takeover",
     gradient: "from-sky-600/35 via-sky-600/5 to-transparent",
   },
-] as const;
-
-/**
- * Placeholder stats. These are illustrative only — real numbers come from the client.
- * Numbers roughly match a typical boutique Miami Beach club footprint.
- */
-export type PlaceholderStat = {
-  value: number;
-  suffix: string;
-  label: string;
-};
-
-export const PLACEHOLDER_STATS: readonly PlaceholderStat[] = [
-  { value: 15, suffix: "+", label: "Tables" },
-  { value: 4200, suffix: "+", label: "Square Feet" },
-  { value: 199, suffix: "+", label: "Guest Capacity" },
 ] as const;
 
 export type PlaceholderStreamer = {
@@ -179,8 +162,8 @@ export const PLACEHOLDER_STREAMERS: readonly PlaceholderStreamer[] = [
 
 /**
  * Opening hours.
- * Per CLAUDE.md: "The venue operates Wed–Sat only." Flagship streaming nights are Wed + Sat,
- * but Thu + Fri are also open for regular service. dayIndex matches JS Date.getDay() (0 = Sunday).
+ * The venue operates Wednesday and Saturday only — both are flagship streaming nights.
+ * dayIndex matches JS Date.getDay() (0 = Sunday).
  */
 export type OpeningDay = {
   day: "Monday" | "Tuesday" | "Wednesday" | "Thursday" | "Friday" | "Saturday" | "Sunday";
@@ -194,8 +177,8 @@ export const OPENING_HOURS: readonly OpeningDay[] = [
   { day: "Monday", short: "Mon", hours: null, flagship: false, dayIndex: 1 },
   { day: "Tuesday", short: "Tue", hours: null, flagship: false, dayIndex: 2 },
   { day: "Wednesday", short: "Wed", hours: "10 PM – 5 AM", flagship: true, dayIndex: 3 },
-  { day: "Thursday", short: "Thu", hours: "10 PM – 5 AM", flagship: false, dayIndex: 4 },
-  { day: "Friday", short: "Fri", hours: "10 PM – 5 AM", flagship: false, dayIndex: 5 },
+  { day: "Thursday", short: "Thu", hours: null, flagship: false, dayIndex: 4 },
+  { day: "Friday", short: "Fri", hours: null, flagship: false, dayIndex: 5 },
   { day: "Saturday", short: "Sat", hours: "10 PM – 5 AM", flagship: true, dayIndex: 6 },
   { day: "Sunday", short: "Sun", hours: null, flagship: false, dayIndex: 0 },
 ] as const;

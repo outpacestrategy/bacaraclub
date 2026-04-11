@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 export default function StreamersPage() {
   const mailtoSubject = encodeURIComponent("Streamer Program Application — Bacara Club");
   const mailtoBody = encodeURIComponent(
-    `Hi Bacara team,\n\nI'd like to apply to the streamer program.\n\nName: \nPlatform (Twitch / Kick / TikTok / YouTube / IG Live): \nHandle: \nFollower count: \nWhich night you'd like (Wed / Sat / other): \nWhat you want to broadcast: \n\nThanks.`,
+    `Hi Bacara team,\n\nI'd like to apply to the streamer program.\n\nName: \nPlatform (Twitch / Kick / TikTok / YouTube / IG Live): \nHandle: \nFollower count: \nWhich night you'd like (Wed / Sat): \nWhat you want to broadcast: \n\nThanks.`,
   );
   const mailto = `mailto:${VENUE.email}?subject=${mailtoSubject}&body=${mailtoBody}`;
 

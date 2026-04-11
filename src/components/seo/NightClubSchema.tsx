@@ -47,11 +47,11 @@ export function NightClubSchema() {
       latitude: 25.7953,
       longitude: -80.1296,
     },
-    // Wednesday–Saturday, 22:00–05:00 (crosses midnight — schema.org allows closes < opens)
+    // Wednesday + Saturday only, 22:00–05:00 (crosses midnight — schema.org allows closes < opens)
     openingHoursSpecification: [
       {
         "@type": "OpeningHoursSpecification",
-        dayOfWeek: ["Wednesday", "Thursday", "Friday", "Saturday"],
+        dayOfWeek: ["Wednesday", "Saturday"],
         opens: "22:00",
         closes: "05:00",
       },

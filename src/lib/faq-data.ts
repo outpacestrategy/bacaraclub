@@ -44,7 +44,7 @@ export interface FAQEntry {
   answer: string;
   /**
    * Set true when the answer contains specific claims (dress code rules, age cutoff,
-   * pricing, hours beyond the confirmed Wed–Sat window, guest-list deadlines) that
+   * pricing, hours beyond the confirmed Wednesday/Saturday window, guest-list deadlines) that
    * have NOT been verified with the client yet. The UI surfaces these with a
    * data-placeholder attribute and a TODO marker in the JSON-LD schema consumer.
    */
@@ -82,7 +82,7 @@ export const FAQS: readonly FAQEntry[] = [
     category: "location",
     question: "What nights is Bacara Club open?",
     answer:
-      "Bacara Club is open Wednesday through Saturday, from 10 PM to 5 AM. Wednesday and Saturday are the flagship broadcast nights with resident DJs and creator programming; Thursday and Friday run regular nightclub service.",
+      "Bacara Club is open two nights a week: Wednesday and Saturday, from 10 PM to 5 AM. Both are flagship broadcast nights with resident DJs and creator programming. The venue is closed Sunday through Tuesday and Thursday through Friday.",
   },
   {
     id: "wednesday-night-miami-beach",
@@ -110,7 +110,7 @@ export const FAQS: readonly FAQEntry[] = [
     category: "booking",
     question: "How do I reserve a table at Bacara Club?",
     answer:
-      "Reserve a table online at bacaraclub.com/reserve. The request form asks for your preferred night, party size, section, budget range, and contact details, and the door team confirms availability before the show. Tables can be booked for Wednesday or Saturday flagship nights and for Thursday and Friday regular service.",
+      "Reserve a table online at bacaraclub.com/reserve. The request form asks for your preferred night, party size, section, budget range, and contact details, and the door team confirms availability before the show. Tables can be booked for either flagship night — Wednesday or Saturday.",
   },
   {
     id: "bacara-bottle-service",

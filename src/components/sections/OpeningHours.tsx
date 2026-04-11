@@ -47,7 +47,7 @@ export function OpeningHours() {
           eyebrow="Schedule"
           title="Opening"
           highlight="Hours"
-          description="Wednesdays and Saturdays are the flagship broadcasts. Thursdays and Fridays keep the room open for regular service. Closed Sunday through Tuesday."
+          description="Bacara is open two nights a week: Wednesday and Saturday. Both are flagship broadcast nights. Closed Sunday through Tuesday and Thursday through Friday."
         />
 
         <div className="mt-14 grid grid-cols-2 gap-3 sm:grid-cols-4 md:gap-4 lg:grid-cols-7">

@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
  * big form."
  *
  * Steps:
- *   1. Which night?    — Wednesday / Saturday / Other
+ *   1. Which night?    — Wednesday / Saturday
  *   2. Party size       — 2 / 4 / 6 / 8 / 10+
  *   3. Section          — Main Room / VIP Booth / Streamer Table / Private Area
  *   4. Budget range     — $500-1000 / $1000-2500 / $2500-5000 / $5000+
@@ -36,7 +36,7 @@ import { cn } from "@/lib/utils";
 type Step = 0 | 1 | 2 | 3 | 4 | 5;
 
 type QuizState = {
-  night: "wednesday" | "saturday" | "other";
+  night: "wednesday" | "saturday";
   size: string;
   section: string;
   budget: string;
@@ -83,7 +83,7 @@ function ReserveQuiz() {
   const searchParams = useSearchParams();
   const nightParam = searchParams.get("night");
   const initialNight: QuizState["night"] =
-    nightParam === "saturday" || nightParam === "wednesday" || nightParam === "other"
+    nightParam === "saturday" || nightParam === "wednesday"
       ? nightParam
       : "wednesday";
 
@@ -166,13 +166,12 @@ function ReserveQuiz() {
         <AnimatePresence mode="wait">
           {step === 0 && (
             <motion.div key="s0" {...stepVariants} transition={{ duration: 0.3 }}>
-              <StepHeading title="Which night?" subtitle="Pick your preferred night at Bacara" />
+              <StepHeading title="Which night?" subtitle="Bacara is open Wednesday and Saturday" />
               <div className="mt-8 grid gap-3">
                 {(
                   [
                     { id: "wednesday", label: "Wednesday", subtitle: "Flagship broadcast · 10 PM – 5 AM" },
                     { id: "saturday", label: "Saturday", subtitle: "Flagship broadcast · 10 PM – 5 AM" },
-                    { id: "other", label: "Thursday or Friday", subtitle: "Regular service · 10 PM – 5 AM" },
                   ] as const
                 ).map((opt) => (
                   <OptionCard

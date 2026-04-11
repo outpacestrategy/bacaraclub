@@ -100,8 +100,6 @@ export default function GuestlistPage() {
           >
             <option value="wednesday">Wednesday</option>
             <option value="saturday">Saturday</option>
-            <option value="thursday">Thursday</option>
-            <option value="friday">Friday</option>
           </select>
         </Field>
 

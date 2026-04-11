@@ -37,10 +37,10 @@ export default function AboutPage() {
             The nights
           </h2>
           <p className="mt-4">
-            Wednesday and Saturday are the flagship broadcast nights — resident DJs,
-            the full broadcast setup, and tables that book out the Monday before each
-            show. Thursday and Friday are regular upscale nightclub service — bottle
-            service, a curated crowd, the same dress code.
+            Bacara runs two nights a week: Wednesday and Saturday. Both are flagship
+            broadcast nights with resident DJs, the full broadcast setup, and tables
+            that book out the Monday before each show. The room is dark the rest of
+            the week so every open night is the main event.
           </p>
         </section>
 

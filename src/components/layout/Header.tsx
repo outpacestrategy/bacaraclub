@@ -194,7 +194,7 @@ export function Header() {
               }}
               className="mt-12 text-center text-xs uppercase tracking-[0.18em] text-fg-subtle"
             >
-              235 23rd St · Miami Beach · Wed–Sat
+              235 23rd St · Miami Beach · Wed &amp; Sat
             </motion.div>
           </nav>
         </motion.div>
