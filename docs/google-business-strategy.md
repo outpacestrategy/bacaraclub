@@ -52,6 +52,18 @@ Add as "Products":
 - Private Events & Buyouts — link to `/private`
 - Streamer Program — link to `/streamers`
 
+### Booking link (GBP "Reserve a table" button) — P0
+GBP surfaces a dedicated **Reserve a table** / **Book** button in the Knowledge Panel and on Maps when a booking URL is set on the profile. Per `docs/implementation-plan.md` §3.6, this button must be wired before we put any paid spend against the profile.
+
+- **Primary booking URL:** `https://bacaraclub.com/reserve?utm_source=gbp&utm_medium=booking&utm_campaign=gbp_reserve_button`
+- **Secondary/deeplink URLs** (for weekly Updates posts — see Phase 4):
+  - Wednesday post → `https://bacaraclub.com/wednesdays?utm_source=gbp&utm_medium=post&utm_campaign=gbp_wed`
+  - Saturday post → `https://bacaraclub.com/saturdays?utm_source=gbp&utm_medium=post&utm_campaign=gbp_sat`
+  - Streamer program post → `https://bacaraclub.com/streamers?utm_source=gbp&utm_medium=post&utm_campaign=gbp_streamers`
+- **Set via:** GBP dashboard → Info → "Add menu link" / "Add reservations link." If GBP forces a third-party provider (Resy, OpenTable, Tablelist), use the direct URL field instead — do NOT let GBP auto-populate a third-party link it discovers.
+- **Verification step:** after setting, search `Bacara Club Miami Beach` in an incognito window and confirm the Reserve button on the Knowledge Panel resolves to the exact UTM URL above. UTM tags must land in GA4 Acquisition → Traffic acquisition as `gbp / booking`.
+- **Pixel/GA4 gate:** the `/reserve` page must be verified as firing both Meta Pixel and GA4 events (per CLAUDE.md's "Never run ads at a page that isn't pixel-verified" rule) before the GBP button goes live, because GBP traffic is the cheapest warm traffic we get and we cannot afford to lose attribution on it.
+
 ### Menu (if GBP allows for nightclub category)
 Add a bottle menu with price ranges if the category permits. If not, include pricing guidance in Products.
 

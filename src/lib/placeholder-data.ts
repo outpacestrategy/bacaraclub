@@ -4,76 +4,17 @@
  * Per CLAUDE.md hard rule: "Never ship a fake number. Do not fabricate bottle counts,
  * attendance numbers, celebrity visits, or reviews."
  *
- * Everything in this file is a placeholder used only to scaffold the Milestone 3 sections
- * while the client supplies real events, photos, stats, and streamer partners. Every
- * consumer of this file is marked with a `data-placeholder` attribute in the DOM so that
- * a pre-launch QA pass can grep for it and verify nothing placeholder ships to production.
+ * Non-event placeholders used only to scaffold the Milestone 3 sections while the
+ * client supplies real photos, stats, and streamer partners. Every consumer of this
+ * file is marked with a `data-placeholder` attribute in the DOM so a pre-launch QA
+ * pass can grep for it and verify nothing placeholder ships to production.
+ *
+ * Upcoming events live in `src/lib/events.ts`.
  *
  * Open questions tracked in CLAUDE.md:
  *  - Real streamer partner list (Streamers)
- *  - Real upcoming event calendar (UpcomingEvents)
  *  - Real photography for the Experience carousel
  */
-
-export type PlaceholderEvent = {
-  slug: string;
-  night: "wednesday" | "saturday" | "special";
-  dateLine: string; // e.g. "SAT · APR 11"
-  title: string;
-  host: string;
-  gradient: string; // Tailwind gradient classes for the card cover placeholder
-};
-
-export const PLACEHOLDER_EVENTS: readonly PlaceholderEvent[] = [
-  {
-    slug: "saturday-apr-11",
-    night: "saturday",
-    dateLine: "SAT · APR 11",
-    title: "Saturday Broadcast",
-    host: "Resident · TBD",
-    gradient: "from-accent/40 via-accent/5 to-transparent",
-  },
-  {
-    slug: "wednesday-apr-15",
-    night: "wednesday",
-    dateLine: "WED · APR 15",
-    title: "Wednesday On Air",
-    host: "Resident · TBD",
-    gradient: "from-live/25 via-live/5 to-transparent",
-  },
-  {
-    slug: "saturday-apr-18",
-    night: "saturday",
-    dateLine: "SAT · APR 18",
-    title: "Bacara Presents",
-    host: "Guest · TBD",
-    gradient: "from-purple-600/35 via-purple-600/5 to-transparent",
-  },
-  {
-    slug: "wednesday-apr-22",
-    night: "wednesday",
-    dateLine: "WED · APR 22",
-    title: "Mid-Week Stream",
-    host: "Resident · TBD",
-    gradient: "from-emerald-600/30 via-emerald-600/5 to-transparent",
-  },
-  {
-    slug: "saturday-apr-25",
-    night: "saturday",
-    dateLine: "SAT · APR 25",
-    title: "Late Spring",
-    host: "Guest · TBD",
-    gradient: "from-amber-600/35 via-amber-600/5 to-transparent",
-  },
-  {
-    slug: "wednesday-apr-29",
-    night: "wednesday",
-    dateLine: "WED · APR 29",
-    title: "Creator Night",
-    host: "Streamer Takeover",
-    gradient: "from-sky-600/35 via-sky-600/5 to-transparent",
-  },
-] as const;
 
 export type PlaceholderStreamer = {
   name: string;

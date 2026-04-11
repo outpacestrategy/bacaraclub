@@ -1,8 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 
 import { PageShell } from "@/components/layout/PageShell";
+import { PricingRanges } from "@/components/sections/PricingRanges";
+import { ReservationChannels } from "@/components/sections/ReservationChannels";
+import { EventSchema } from "@/components/seo/EventSchema";
 import { SITE, VENUE } from "@/lib/constants";
+import { getUpcomingEventsByNight } from "@/lib/events";
 
 export const metadata: Metadata = {
   title: "Saturday Nights at Bacara — Miami Beach",
@@ -19,12 +24,23 @@ export const metadata: Metadata = {
 };
 
 /**
- * /saturdays — evergreen landing page, twin of /wednesdays. Same structural role: the
- * destination for Saturday-night Meta Ads and the SEO workhorse for "Saturday night
- * Miami Beach club" queries. See docs/site-plan.md and CLAUDE.md for the positioning
- * and the no-deep-link-to-home hard rule.
+ * /saturdays — evergreen landing page, twin of /wednesdays.
+ *
+ * Per docs/site-plan.md: these landers are the SEO and ads workhorses and
+ * must exist year-round. Per docs/implementation-plan.md §1.3 + §1.4 + §3.1
+ * this page gets the same P0 additions as /wednesdays:
+ *   - Table pricing guidance (placeholder ranges with a visible pre-launch
+ *     warning)
+ *   - Multi-channel reservation block (email / text / Tablelist)
+ *   - Event JSON-LD for every upcoming Saturday surfaced on this page
+ *
+ * CLAUDE.md hard rule: "A Saturday ad goes to /saturdays, not /." Every
+ * Meta Ads Saturday creative lands here. Every section reinforces the
+ * Saturday positioning and funnels to /reserve.
  */
 export default function SaturdaysPage() {
+  const saturdayEvents = getUpcomingEventsByNight("saturday");
+
   return (
     <PageShell
       eyebrow="Saturdays"
@@ -32,6 +48,11 @@ export default function SaturdaysPage() {
       highlight="Bacara Miami Beach"
       description="Saturday is the biggest night of the week at Bacara. Headlining DJ, bottle service at every section, and the same always-on broadcast setup that makes Bacara Miami Beach's first streaming nightclub."
     >
+      {/* Event JSON-LD — one per upcoming Saturday surfaced below */}
+      {saturdayEvents.map((event) => (
+        <EventSchema key={event.slug} event={event} />
+      ))}
+
       <section className="mb-16">
         <h2 className="font-[family-name:var(--font-display)] text-3xl text-fg md:text-4xl">
           The night
@@ -49,29 +70,52 @@ export default function SaturdaysPage() {
             from multiple angles all night. If you&apos;re a creator, Saturday books out
             first — apply to the streamer program well ahead of your target date.
           </p>
-          <p>
-            Doors 10 PM. Last call 4:30 AM. Close 5 AM.
-          </p>
+          <p>Doors 10 PM. Last call 4:30 AM. Close 5 AM.</p>
         </div>
       </section>
 
-      <section className="mb-16 rounded-2xl border border-border bg-bg-elevated/50 p-8 md:p-10">
-        <h2 className="font-[family-name:var(--font-display)] text-2xl text-fg md:text-3xl">
-          Tables &amp; pricing
-        </h2>
-        <p className="mt-4 text-base leading-relaxed text-fg-muted">
-          Saturday is Bacara&apos;s busiest night, so tables book fastest and minimums
-          run higher than Wednesday. Pricing varies by section, party size, and
-          proximity to the DJ booth. Submit a request and the door team comes back
-          with current pricing for your preferred Saturday.
-        </p>
-        <Link
-          href="/reserve?night=saturday"
-          className="mt-6 inline-flex items-center justify-center rounded-full bg-accent px-6 py-3 text-sm font-medium text-bg shadow-[0_0_40px_-10px_var(--accent-glow)] transition-colors hover:bg-accent-hover"
-        >
-          Reserve a Saturday table
-        </Link>
-      </section>
+      {/* Upcoming Saturdays — the "this week's lineup" block from site-plan.md */}
+      {saturdayEvents.length > 0 && (
+        <section className="mb-16">
+          <h2 className="font-[family-name:var(--font-display)] text-2xl text-fg md:text-3xl">
+            Upcoming Saturdays
+          </h2>
+          <ul className="mt-6 grid gap-4 sm:grid-cols-2">
+            {saturdayEvents.map((event) => (
+              <li
+                key={event.slug}
+                data-placeholder="true"
+                className="rounded-2xl border border-border bg-bg-elevated/50 p-6"
+              >
+                <p className="text-[11px] uppercase tracking-[0.14em] text-fg-muted">
+                  {event.dateLine}
+                </p>
+                <p className="mt-2 font-[family-name:var(--font-display)] text-xl text-fg md:text-2xl">
+                  {event.title}
+                </p>
+                <p className="mt-1 text-sm text-fg-muted">{event.host}</p>
+                <div className="mt-4 flex gap-2">
+                  <Link
+                    href={`/events/${event.slug}`}
+                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-border px-4 py-2 text-xs text-fg-muted transition-colors hover:border-accent hover:text-accent"
+                  >
+                    Details
+                  </Link>
+                  <Link
+                    href={`/reserve?event=${event.slug}`}
+                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-accent/60 px-4 py-2 text-xs font-medium text-accent transition-colors hover:bg-accent hover:text-bg"
+                  >
+                    Reserve
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <PricingRanges night="saturday" />
 
       <section>
         <h2 className="font-[family-name:var(--font-display)] text-2xl text-fg md:text-3xl">
@@ -87,6 +131,8 @@ export default function SaturdaysPage() {
           .
         </p>
       </section>
+
+      <ReservationChannels />
     </PageShell>
   );
 }

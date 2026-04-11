@@ -7,7 +7,8 @@ import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { SectionHeader } from "@/components/sections/SectionHeader";
-import { PLACEHOLDER_EVENTS, type PlaceholderEvent } from "@/lib/placeholder-data";
+import { EventSchema } from "@/components/seo/EventSchema";
+import { UPCOMING_EVENTS, type UpcomingEvent } from "@/lib/events";
 import { cn } from "@/lib/utils";
 
 /**
@@ -42,10 +43,19 @@ import { cn } from "@/lib/utils";
  */
 export function UpcomingEvents() {
   const slidesPerPage = useSlidesPerPage();
-  const pageCount = Math.ceil(PLACEHOLDER_EVENTS.length / slidesPerPage);
+  const pageCount = Math.ceil(UPCOMING_EVENTS.length / slidesPerPage);
 
   return (
     <section id="events" className="relative py-24 md:py-32">
+      {/*
+       * Event JSON-LD — one per upcoming event surfaced on the home carousel.
+       * Per docs/implementation-plan.md §3.1, every upcoming-event card
+       * rendered on /, /wednesdays, /saturdays is a rich-result candidate so
+       * Google and AI search can index the specific Wed/Sat dates directly.
+       */}
+      {UPCOMING_EVENTS.map((event) => (
+        <EventSchema key={event.slug} event={event} />
+      ))}
       <div className="mx-auto w-full max-w-7xl px-5 md:px-8">
         <SectionHeader
           eyebrow="Events"
@@ -56,7 +66,7 @@ export function UpcomingEvents() {
 
         <Carousel.Root
           defaultPage={0}
-          slideCount={PLACEHOLDER_EVENTS.length}
+          slideCount={UPCOMING_EVENTS.length}
           slidesPerPage={slidesPerPage}
           slidesPerMove="auto"
           spacing="1.5rem"
@@ -95,7 +105,7 @@ export function UpcomingEvents() {
             </Carousel.Control>
 
             <Carousel.ItemGroup className="overflow-hidden">
-              {PLACEHOLDER_EVENTS.map((event, i) => (
+              {UPCOMING_EVENTS.map((event, i) => (
                 <Carousel.Item key={event.slug} index={i} className="h-auto">
                   <EventCard event={event} index={i} />
                 </Carousel.Item>
@@ -161,7 +171,7 @@ function EventCard({
   event,
   index,
 }: {
-  event: PlaceholderEvent;
+  event: UpcomingEvent;
   index: number;
 }) {
   const prefersReducedMotion = useReducedMotion();
@@ -230,7 +240,7 @@ function EventCard({
         </div>
 
         <Link
-          href={`/reserve?night=${event.night}`}
+          href={`/reserve?event=${event.slug}`}
           className="mt-auto inline-flex w-full items-center justify-center gap-2 rounded-full border border-accent/60 px-5 py-2.5 text-sm font-medium text-accent transition-colors hover:bg-accent hover:text-bg"
         >
           Reserve

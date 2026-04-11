@@ -29,6 +29,30 @@ export const VENUE = {
   phoneDisplay: null as string | null,
   phoneTel: null as string | null,
   email: "admin@bacaraclub.com",
+  // Reservation-specific alias set up to forward to the general inbox. Used by
+  // the multi-channel reservation block on /reserve, /wednesdays, /saturdays
+  // (implementation-plan.md §1.3). MUST be provisioned as a real alias in the
+  // Google Workspace / Netlify DNS record before launch.
+  tablesEmail: "tables@bacaraclub.com",
+} as const;
+
+/**
+ * Reservation channel state. Values surface in the "Prefer another way to
+ * book?" block rendered by ReservationChannels. Keep every item nullable so
+ * the UI can show a clearly-marked "coming soon" slot when the channel isn't
+ * live yet — per CLAUDE.md's hard rule against fake numbers.
+ *
+ * Text / SMS: Open Question #4 in CLAUDE.md — rendered as a "coming soon"
+ * slot until the phone number is provisioned.
+ *
+ * Tablelist / Discotech: implementation-plan.md §1.6, P2 item — rendered as
+ * a "coming soon" slot until the aggregator listing is created.
+ */
+export const RESERVATION_CHANNELS = {
+  email: "tables@bacaraclub.com",
+  textNumberDisplay: null as string | null,
+  textNumberTel: null as string | null,
+  tablelistUrl: null as string | null,
 } as const;
 
 export type NavLink = {

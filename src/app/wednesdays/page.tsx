@@ -1,8 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 
 import { PageShell } from "@/components/layout/PageShell";
+import { PricingRanges } from "@/components/sections/PricingRanges";
+import { ReservationChannels } from "@/components/sections/ReservationChannels";
+import { EventSchema } from "@/components/seo/EventSchema";
 import { SITE, VENUE } from "@/lib/constants";
+import { getUpcomingEventsByNight } from "@/lib/events";
 
 export const metadata: Metadata = {
   title: "Wednesday Nights at Bacara — Miami Beach",
@@ -21,17 +26,22 @@ export const metadata: Metadata = {
 /**
  * /wednesdays — evergreen landing page.
  *
- * Per docs/site-plan.md: "These are the SEO and ads workhorses. They exist year-round,
- * even if the specific night's lineup changes weekly. The URL, headings, and schema
- * target high-intent queries like 'Wednesday night Miami club'."
+ * Per docs/site-plan.md: "These are the SEO and ads workhorses. They exist
+ * year-round, even if the specific night's lineup changes weekly."
  *
- * Per CLAUDE.md hard rule: "Always deep-link ads to intent-matching pages. A Wednesday
- * ad goes to /wednesdays, not /. A creator ad goes to /streamers. Never break this rule."
+ * Per docs/implementation-plan.md §1.3 + §1.4 + §3.1 the P0 additions are:
+ *   - Table pricing guidance (placeholder ranges with a visible pre-launch
+ *     warning)
+ *   - Multi-channel reservation block (email / text / Tablelist)
+ *   - Event JSON-LD for every upcoming Wednesday surfaced on this page
  *
- * This page is the destination for Meta Ads targeting Wednesday-night Miami Beach
- * queries. Every section reinforces the Wednesday positioning and funnels to /reserve.
+ * CLAUDE.md hard rule: "A Wednesday ad goes to /wednesdays, not /." This page
+ * is the destination for every Meta Ads Wednesday creative. Every section
+ * reinforces the Wednesday positioning and funnels to /reserve.
  */
 export default function WednesdaysPage() {
+  const wednesdayEvents = getUpcomingEventsByNight("wednesday");
+
   return (
     <PageShell
       eyebrow="Wednesdays"
@@ -39,6 +49,11 @@ export default function WednesdaysPage() {
       highlight="Bacara Miami Beach"
       description="Every Wednesday at Bacara is a live broadcast. A resident DJ, a packed room, and the best creator tables in Miami Beach. 10 PM to 5 AM, always on air."
     >
+      {/* Event JSON-LD — one per upcoming Wednesday surfaced below */}
+      {wednesdayEvents.map((event) => (
+        <EventSchema key={event.slug} event={event} />
+      ))}
+
       <section className="mb-16">
         <h2 className="font-[family-name:var(--font-display)] text-3xl text-fg md:text-4xl">
           The night
@@ -56,29 +71,52 @@ export default function WednesdaysPage() {
             guests, creators broadcasting their night, and the creator community showing
             up to support.
           </p>
-          <p>
-            Doors 10 PM. Last call 4:30 AM. Close 5 AM.
-          </p>
+          <p>Doors 10 PM. Last call 4:30 AM. Close 5 AM.</p>
         </div>
       </section>
 
-      <section className="mb-16 rounded-2xl border border-border bg-bg-elevated/50 p-8 md:p-10">
-        <h2 className="font-[family-name:var(--font-display)] text-2xl text-fg md:text-3xl">
-          Tables &amp; pricing
-        </h2>
-        <p className="mt-4 text-base leading-relaxed text-fg-muted">
-          Wednesday tables start at bottle-service minimums that vary by section,
-          party size, and proximity to the DJ booth. Submit a reservation request
-          with your night, party size, and section preference and the door team
-          responds with current pricing for your exact table.
-        </p>
-        <Link
-          href="/reserve?night=wednesday"
-          className="mt-6 inline-flex items-center justify-center rounded-full bg-accent px-6 py-3 text-sm font-medium text-bg shadow-[0_0_40px_-10px_var(--accent-glow)] transition-colors hover:bg-accent-hover"
-        >
-          Reserve a Wednesday table
-        </Link>
-      </section>
+      {/* Upcoming Wednesdays — the "this week's lineup" block from site-plan.md */}
+      {wednesdayEvents.length > 0 && (
+        <section className="mb-16">
+          <h2 className="font-[family-name:var(--font-display)] text-2xl text-fg md:text-3xl">
+            Upcoming Wednesdays
+          </h2>
+          <ul className="mt-6 grid gap-4 sm:grid-cols-2">
+            {wednesdayEvents.map((event) => (
+              <li
+                key={event.slug}
+                data-placeholder="true"
+                className="rounded-2xl border border-border bg-bg-elevated/50 p-6"
+              >
+                <p className="text-[11px] uppercase tracking-[0.14em] text-fg-muted">
+                  {event.dateLine}
+                </p>
+                <p className="mt-2 font-[family-name:var(--font-display)] text-xl text-fg md:text-2xl">
+                  {event.title}
+                </p>
+                <p className="mt-1 text-sm text-fg-muted">{event.host}</p>
+                <div className="mt-4 flex gap-2">
+                  <Link
+                    href={`/events/${event.slug}`}
+                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-border px-4 py-2 text-xs text-fg-muted transition-colors hover:border-accent hover:text-accent"
+                  >
+                    Details
+                  </Link>
+                  <Link
+                    href={`/reserve?event=${event.slug}`}
+                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-accent/60 px-4 py-2 text-xs font-medium text-accent transition-colors hover:bg-accent hover:text-bg"
+                  >
+                    Reserve
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <PricingRanges night="wednesday" />
 
       <section>
         <h2 className="font-[family-name:var(--font-display)] text-2xl text-fg md:text-3xl">
@@ -94,6 +132,8 @@ export default function WednesdaysPage() {
           .
         </p>
       </section>
+
+      <ReservationChannels />
     </PageShell>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 
@@ -18,12 +19,16 @@ import { CTA, SITE } from "@/lib/constants";
  *  - Poster: `public/brand/bacara-hero-poster.jpg` — first frame at t=1s, used while
  *    the video is decoding so there's no flash of background color on cold load.
  *
+ * Mobile fallback (per docs/implementation-plan.md §2.1): the 6.9 MB MP4 is
+ * heavy for cellular ad traffic, so we render a still poster on phones
+ * (`md:hidden`) and only load the `<video>` on tablet+ (`hidden md:block`).
+ * The `<video>` element has no `preload="auto"` anymore to avoid the browser
+ * downloading the full file on any viewport — it's `metadata` only, so only
+ * the first chunk is fetched until playback actually starts on desktop.
+ *
  * The video element uses `autoPlay muted loop playsInline` for cross-browser
  * autoplay (Safari and iOS require all four attributes for inline mute autoplay
- * to be allowed without user interaction). `preload="auto"` is set so the
- * decoder starts as early as possible — the file is small enough that
- * pre-fetching doesn't meaningfully hurt LCP, and the alternative (a poster
- * frame visible for 200-500ms before playback starts) feels broken.
+ * to be allowed without user interaction).
  *
  * Foreground text uses Framer entry animations on mount. Reduced-motion drops
  * the transform/blur and does opacity-only, matching the rest of the site's
@@ -44,13 +49,25 @@ export function Hero() {
 
   return (
     <section className="relative isolate flex min-h-screen items-center justify-center overflow-hidden">
+      {/* Mobile: poster image only — saves 6.9 MB on cellular ad traffic */}
+      <Image
+        src="/brand/bacara-hero-poster.jpg"
+        alt=""
+        fill
+        priority
+        sizes="100vw"
+        className="pointer-events-none absolute inset-0 -z-20 h-full w-full object-cover md:hidden"
+        aria-hidden="true"
+      />
+
+      {/* Tablet+: autoplaying video background */}
       <video
-        className="pointer-events-none absolute inset-0 -z-20 h-full w-full object-cover"
+        className="pointer-events-none absolute inset-0 -z-20 hidden h-full w-full object-cover md:block"
         autoPlay
         muted
         loop
         playsInline
-        preload="auto"
+        preload="metadata"
         poster="/brand/bacara-hero-poster.jpg"
         aria-hidden="true"
       >

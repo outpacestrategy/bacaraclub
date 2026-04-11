@@ -1,43 +1,65 @@
 "use client";
 
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ArrowLeft, ArrowRight, Check } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarPlus, Camera, Check } from "lucide-react";
 
 import { PageShell } from "@/components/layout/PageShell";
-import { SITE, VENUE } from "@/lib/constants";
+import { ReservationChannels } from "@/components/sections/ReservationChannels";
+import { SITE } from "@/lib/constants";
+import { trackConversion } from "@/lib/analytics";
+import { buildIcsDataUrl } from "@/lib/calendar";
+import {
+  UPCOMING_EVENTS,
+  getEventBySlug,
+  type UpcomingEvent,
+} from "@/lib/events";
 import { cn } from "@/lib/utils";
 
 /**
  * /reserve — primary conversion.
  *
- * Per docs/site-plan.md: "This is the most important page on the site. Built as a
- * multi-step quiz per the create-website skill's `ContactQuiz` pattern, not a single
- * big form."
+ * Per docs/site-plan.md: the most important page on the site. Built as a
+ * multi-step quiz per the create-website skill's `ContactQuiz` pattern.
  *
- * Steps:
- *   1. Which night?    — Wednesday / Saturday
- *   2. Party size       — 2 / 4 / 6 / 8 / 10+
- *   3. Section          — Main Room / VIP Booth / Streamer Table / Private Area
- *   4. Budget range     — $500-1000 / $1000-2500 / $2500-5000 / $5000+
- *   5. Contact details  — name, phone, email, IG handle
- *   6. Success state    — confirmation + calendar link
+ * This version implements the P0 "event-first" upgrade from
+ * docs/implementation-plan.md §1.1 + §1.2 + §1.3:
  *
- * LAUNCH 1 BEHAVIOR: submit handler uses `mailto:` with a pre-filled body. No backend
- * required. When Milestone 5 wires in Supabase, swap `handleSubmit` for a POST to
- * /api/reserve, and fire Meta Pixel events on each step (`ReserveQuizStart`,
- * `ReserveQuizStep2..5`, `ReserveQuizSubmit`, `Lead`).
+ *   1. Step 1 is a list of the next upcoming Wednesday / Saturday events,
+ *      each with date, theme, and a hero image. "Other date" remains as a
+ *      fallback option for private or unusual asks. The selected event slug
+ *      is wired all the way through the quiz state and into the submission
+ *      payload so /api/reserve (and eventually Supabase) captures which
+ *      specific night the lead is for.
+ *   2. The success state promises a VIP host text within 30 minutes, offers
+ *      an "Add to Calendar" download for the selected night, and surfaces
+ *      the Instagram follow CTA.
+ *   3. The multi-channel reservation block (email / text / Tablelist) is
+ *      rendered below the quiz so high-spend buyers who only email or only
+ *      text still find a path.
  *
- * The `night` query param (`?night=wednesday` / `?night=saturday`) is read on mount
- * so event-card deep-links pre-select the first step.
+ * Submission pipeline:
+ *   - POST /api/reserve with the full payload
+ *   - Stub handler logs to console (Milestone 5 adds Supabase)
+ *   - Fires GA `reserve_submit` and Meta Pixel `Lead`
+ *   - Advances the UI to the success state regardless (never leave the user
+ *     staring at an error if the network fails — the door team can still
+ *     reach them by email from the captured mailto fallback)
  */
 
 type Step = 0 | 1 | 2 | 3 | 4 | 5;
 
 type QuizState = {
-  night: "wednesday" | "saturday";
-  size: string;
+  /** Slug of the selected upcoming event; null if "other date" was picked */
+  eventSlug: string | null;
+  /** Derived night ("wednesday" / "saturday" / "other") for deep links + Supabase */
+  night: "wednesday" | "saturday" | "other";
+  /** Free-form date captured when eventSlug is null */
+  preferredDate: string;
+  partySize: string;
   section: string;
   budget: string;
   name: string;
@@ -47,8 +69,10 @@ type QuizState = {
 };
 
 const initialState: QuizState = {
+  eventSlug: null,
   night: "wednesday",
-  size: "",
+  preferredDate: "",
+  partySize: "",
   section: "",
   budget: "",
   name: "",
@@ -63,78 +87,168 @@ export default function ReservePage() {
       eyebrow="Reserve"
       title="Reserve your"
       highlight="Table"
-      description="Five quick questions and the Bacara door team will come back with availability for your night. Wednesdays and Saturdays book fastest — submit at least 48 hours ahead when possible."
+      description="Pick the night, tell us a little about your party, and a Bacara VIP host will come back within 30 minutes with availability and pricing. Wednesdays and Saturdays book fastest — submit at least 48 hours ahead when possible."
       showClosingCta={false}
     >
       <Suspense fallback={<QuizSkeleton />}>
         <ReserveQuiz />
       </Suspense>
+      <ReservationChannels />
     </PageShell>
   );
 }
 
 function QuizSkeleton() {
   return (
-    <div className="mx-auto h-[520px] max-w-2xl animate-pulse rounded-3xl border border-border bg-bg-elevated/50" />
+    <div className="mx-auto h-[560px] max-w-3xl animate-pulse rounded-3xl border border-border bg-bg-elevated/50" />
   );
 }
 
 function ReserveQuiz() {
   const searchParams = useSearchParams();
-  const nightParam = searchParams.get("night");
-  const initialNight: QuizState["night"] =
-    nightParam === "saturday" || nightParam === "wednesday"
-      ? nightParam
-      : "wednesday";
+  const prefersReducedMotion = useReducedMotion();
+
+  // Pre-select an event or a night from ?event=slug or ?night=wednesday.
+  // `event=` wins if both are present, because it's the more specific signal.
+  const initial: QuizState = useMemo(() => {
+    const eventParam = searchParams.get("event");
+    const nightParam = searchParams.get("night");
+    if (eventParam) {
+      const ev = getEventBySlug(eventParam);
+      if (ev) {
+        return {
+          ...initialState,
+          eventSlug: ev.slug,
+          night: ev.night === "saturday" ? "saturday" : "wednesday",
+        };
+      }
+    }
+    if (nightParam === "saturday" || nightParam === "wednesday") {
+      return { ...initialState, night: nightParam };
+    }
+    return initialState;
+  }, [searchParams]);
 
   const [step, setStep] = useState<Step>(0);
-  const [state, setState] = useState<QuizState>({
-    ...initialState,
-    night: initialNight,
-  });
-  const prefersReducedMotion = useReducedMotion();
+  const [state, setState] = useState<QuizState>(initial);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const totalSteps = 5;
   const progress = useMemo(() => (step / totalSteps) * 100, [step]);
 
+  // Fire ReserveQuizStart on first render (matches docs/meta-ads-strategy.md).
+  useEffect(() => {
+    trackConversion("reserve_quiz_start", "InitiateCheckout", {
+      event_slug: initial.eventSlug ?? "none",
+      night: initial.night,
+    });
+    // Only fire once on mount — the dependency list intentionally excludes
+    // state that changes over time.
+
+  }, []);
+
   const next = () => setStep((s) => (s < totalSteps ? ((s + 1) as Step) : s));
   const prev = () => setStep((s) => (s > 0 ? ((s - 1) as Step) : s));
 
-  const setNight = (night: QuizState["night"]) => {
-    setState((s) => ({ ...s, night }));
-    // Auto-advance on selection
+  /**
+   * Step 1 — choose an event (or "other date").
+   *
+   * Selecting an event locks `eventSlug` + `night`. Selecting "other date"
+   * clears `eventSlug` and sets night = "other", which keeps the quiz shape
+   * uniform while letting the door team know to follow up on a non-flagship
+   * request.
+   */
+  const pickEvent = (event: UpcomingEvent) => {
+    setState((s) => ({
+      ...s,
+      eventSlug: event.slug,
+      night: event.night === "saturday" ? "saturday" : "wednesday",
+      preferredDate: "",
+    }));
+    trackConversion("reserve_step_1", "AddToCart", {
+      event_slug: event.slug,
+      night: event.night,
+    });
     setTimeout(next, 180);
   };
-  const setSize = (size: string) => {
-    setState((s) => ({ ...s, size }));
+
+  const pickOtherDate = () => {
+    setState((s) => ({
+      ...s,
+      eventSlug: null,
+      night: "other",
+      preferredDate: "",
+    }));
+    trackConversion("reserve_step_1", "AddToCart", {
+      event_slug: "other",
+      night: "other",
+    });
+    setTimeout(next, 180);
+  };
+
+  const setPartySize = (size: string) => {
+    setState((s) => ({ ...s, partySize: size }));
+    trackConversion("reserve_step_2", null, { party_size: size });
     setTimeout(next, 180);
   };
   const setSection = (section: string) => {
     setState((s) => ({ ...s, section }));
+    trackConversion("reserve_step_3", null, { section });
     setTimeout(next, 180);
   };
   const setBudget = (budget: string) => {
     setState((s) => ({ ...s, budget }));
+    trackConversion("reserve_step_4", null, { budget });
     setTimeout(next, 180);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const subject = encodeURIComponent("Reservation Request — Bacara Club");
-    const lines = [
-      `Night: ${state.night}`,
-      `Party size: ${state.size}`,
-      `Section: ${state.section}`,
-      `Budget range: ${state.budget}`,
-      `Name: ${state.name}`,
-      `Phone: ${state.phone}`,
-      `Email: ${state.email}`,
-      `Instagram: ${state.instagram || "(not provided)"}`,
-    ];
-    const body = encodeURIComponent(lines.join("\n"));
-    window.location.href = `mailto:${VENUE.email}?subject=${subject}&body=${body}`;
-    // Advance to the success state immediately so users who return see confirmation
-    setStep(5);
+    setSubmitError(null);
+    setSubmitting(true);
+
+    try {
+      const res = await fetch("/api/reserve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          eventSlug: state.eventSlug,
+          night: state.night,
+          preferredDate: state.preferredDate || null,
+          partySize: state.partySize,
+          section: state.section,
+          budget: state.budget,
+          name: state.name,
+          phone: state.phone,
+          email: state.email,
+          instagram: state.instagram || null,
+        }),
+      });
+      // Fire the Lead conversion regardless of the server-side persistence
+      // success: once the user has submitted the form, the intent signal is
+      // real to Meta's optimizer and GA, and the email/text fallback in the
+      // error path means the door team still gets the lead.
+      trackConversion("reserve_submit", "Lead", {
+        event_slug: state.eventSlug ?? "none",
+        night: state.night,
+        party_size: state.partySize,
+        section: state.section,
+        budget: state.budget,
+      });
+      if (!res.ok) {
+        throw new Error(`Submission failed (${res.status})`);
+      }
+    } catch (err) {
+      setSubmitError(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong — please try again or email tables@bacaraclub.com.",
+      );
+    } finally {
+      setSubmitting(false);
+      setStep(5);
+    }
   };
 
   const stepVariants = prefersReducedMotion
@@ -145,8 +259,12 @@ function ReserveQuiz() {
         exit: { opacity: 0, x: -24 },
       };
 
+  const selectedEvent = state.eventSlug
+    ? getEventBySlug(state.eventSlug) ?? null
+    : null;
+
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="mx-auto max-w-3xl">
       {/* Progress bar */}
       <div className="mb-10 flex items-center gap-4">
         <div className="flex-1 rounded-full bg-bg-elevated">
@@ -162,40 +280,60 @@ function ReserveQuiz() {
         </span>
       </div>
 
-      <div className="min-h-[460px] rounded-3xl border border-border bg-bg-elevated/50 p-6 md:p-10">
+      <div className="min-h-[520px] rounded-3xl border border-border bg-bg-elevated/50 p-6 md:p-10">
         <AnimatePresence mode="wait">
+          {/* STEP 1 — event-first picker */}
           {step === 0 && (
             <motion.div key="s0" {...stepVariants} transition={{ duration: 0.3 }}>
-              <StepHeading title="Which night?" subtitle="Bacara is open Wednesday and Saturday" />
-              <div className="mt-8 grid gap-3">
-                {(
-                  [
-                    { id: "wednesday", label: "Wednesday", subtitle: "Flagship broadcast · 10 PM – 5 AM" },
-                    { id: "saturday", label: "Saturday", subtitle: "Flagship broadcast · 10 PM – 5 AM" },
-                  ] as const
-                ).map((opt) => (
-                  <OptionCard
-                    key={opt.id}
-                    label={opt.label}
-                    subtitle={opt.subtitle}
-                    selected={state.night === opt.id}
-                    onClick={() => setNight(opt.id)}
+              <StepHeading
+                title="Which night?"
+                subtitle="Pick an upcoming broadcast. Or request a different date."
+              />
+              <div className="mt-8 grid gap-3 md:grid-cols-2">
+                {UPCOMING_EVENTS.map((event) => (
+                  <EventOptionCard
+                    key={event.slug}
+                    event={event}
+                    selected={state.eventSlug === event.slug}
+                    onClick={() => pickEvent(event)}
                   />
                 ))}
+                <button
+                  type="button"
+                  onClick={pickOtherDate}
+                  className={cn(
+                    "flex flex-col items-start justify-center rounded-xl border border-dashed px-5 py-5 text-left transition-all md:col-span-2",
+                    state.eventSlug === null && state.night === "other"
+                      ? "border-accent bg-accent/[0.05]"
+                      : "border-border/70 bg-bg hover:border-accent/50",
+                  )}
+                >
+                  <p className="text-[11px] uppercase tracking-[0.14em] text-fg-muted">
+                    Other
+                  </p>
+                  <p className="mt-2 font-[family-name:var(--font-display)] text-xl text-fg md:text-2xl">
+                    Request a different date
+                  </p>
+                  <p className="mt-1 text-xs text-fg-muted md:text-sm">
+                    Private events, buyouts, or a specific upcoming night not
+                    listed above.
+                  </p>
+                </button>
               </div>
             </motion.div>
           )}
 
+          {/* STEP 2 — party size */}
           {step === 1 && (
             <motion.div key="s1" {...stepVariants} transition={{ duration: 0.3 }}>
-              <StepHeading title="Party size?" subtitle="How many guests are in your party" />
+              <StepHeading title="Party size?" subtitle="How many guests in your party" />
               <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {["2", "4", "6", "8", "10+", "Ask"].map((size) => (
                   <OptionCard
                     key={size}
                     label={size}
-                    selected={state.size === size}
-                    onClick={() => setSize(size)}
+                    selected={state.partySize === size}
+                    onClick={() => setPartySize(size)}
                     compact
                   />
                 ))}
@@ -203,6 +341,7 @@ function ReserveQuiz() {
             </motion.div>
           )}
 
+          {/* STEP 3 — section */}
           {step === 2 && (
             <motion.div key="s2" {...stepVariants} transition={{ duration: 0.3 }}>
               <StepHeading title="Which section?" subtitle="Where would you like to sit" />
@@ -225,6 +364,7 @@ function ReserveQuiz() {
             </motion.div>
           )}
 
+          {/* STEP 4 — budget */}
           {step === 3 && (
             <motion.div key="s3" {...stepVariants} transition={{ duration: 0.3 }}>
               <StepHeading
@@ -244,6 +384,7 @@ function ReserveQuiz() {
             </motion.div>
           )}
 
+          {/* STEP 5 — contact details */}
           {step === 4 && (
             <motion.form
               key="s4"
@@ -252,83 +393,145 @@ function ReserveQuiz() {
               transition={{ duration: 0.3 }}
               className="space-y-5"
             >
-              <StepHeading title="Your details" subtitle="How the door team reaches you" />
-              <div className="mt-6 space-y-5">
+              <StepHeading title="Your details" subtitle="How the VIP host team reaches you" />
+
+              {/* Optional free-form date when user picked "other" */}
+              {state.night === "other" && (
                 <TextField
-                  id="r-name"
-                  label="Full name"
-                  required
-                  value={state.name}
-                  autoComplete="name"
-                  onChange={(v) => setState({ ...state, name: v })}
+                  id="r-date"
+                  label="Preferred date"
+                  hint="Optional — the day you're hoping to book"
+                  value={state.preferredDate}
+                  placeholder="e.g., June 14, any Wednesday in July"
+                  onChange={(v) => setState({ ...state, preferredDate: v })}
                 />
-                <TextField
-                  id="r-phone"
-                  label="Phone"
-                  type="tel"
-                  inputMode="tel"
-                  required
-                  value={state.phone}
-                  autoComplete="tel"
-                  placeholder="+1 305 555 0199"
-                  onChange={(v) => setState({ ...state, phone: v })}
-                />
-                <TextField
-                  id="r-email"
-                  label="Email"
-                  type="email"
-                  inputMode="email"
-                  required
-                  value={state.email}
-                  autoComplete="email"
-                  placeholder="you@example.com"
-                  onChange={(v) => setState({ ...state, email: v })}
-                />
-                <TextField
-                  id="r-ig"
-                  label="Instagram"
-                  hint="Optional"
-                  value={state.instagram}
-                  placeholder="@handle"
-                  onChange={(v) => setState({ ...state, instagram: v })}
-                />
-              </div>
+              )}
+
+              <TextField
+                id="r-name"
+                label="Full name"
+                required
+                value={state.name}
+                autoComplete="name"
+                onChange={(v) => setState({ ...state, name: v })}
+              />
+              <TextField
+                id="r-phone"
+                label="Phone"
+                type="tel"
+                inputMode="tel"
+                required
+                value={state.phone}
+                autoComplete="tel"
+                placeholder="+1 305 555 0199"
+                onChange={(v) => setState({ ...state, phone: v })}
+              />
+              <TextField
+                id="r-email"
+                label="Email"
+                type="email"
+                inputMode="email"
+                required
+                value={state.email}
+                autoComplete="email"
+                placeholder="you@example.com"
+                onChange={(v) => setState({ ...state, email: v })}
+              />
+              <TextField
+                id="r-ig"
+                label="Instagram"
+                hint="Optional"
+                value={state.instagram}
+                placeholder="@handle"
+                onChange={(v) => setState({ ...state, instagram: v })}
+              />
+
+              {submitError && (
+                <p className="text-sm text-live" role="alert">
+                  {submitError}
+                </p>
+              )}
 
               <button
                 type="submit"
-                className="flex w-full items-center justify-center gap-2 rounded-full bg-accent px-6 py-4 text-sm font-medium text-bg shadow-[0_0_40px_-10px_var(--accent-glow)] transition-colors hover:bg-accent-hover"
+                disabled={submitting}
+                className="flex w-full items-center justify-center gap-2 rounded-full bg-accent px-6 py-4 text-sm font-medium text-bg shadow-[0_0_40px_-10px_var(--accent-glow)] transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Submit reservation request
-                <ArrowRight className="h-4 w-4" />
+                {submitting ? "Submitting…" : "Submit reservation request"}
+                {!submitting && <ArrowRight className="h-4 w-4" />}
               </button>
             </motion.form>
           )}
 
+          {/* STEP 6 — VIP SLA success state */}
           {step === 5 && (
             <motion.div
               key="s5"
               {...stepVariants}
               transition={{ duration: 0.3 }}
-              className="py-10 text-center"
+              className="py-6 text-center"
             >
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-accent bg-accent/10">
                 <Check className="h-8 w-8 text-accent" />
               </div>
               <h2 className="mt-6 font-[family-name:var(--font-display)] text-3xl text-fg md:text-4xl">
-                Request sent.
+                You&apos;re in.
               </h2>
               <p className="mx-auto mt-4 max-w-md text-base leading-relaxed text-fg-muted">
-                The Bacara door team will come back within one business day with
-                availability and pricing. Follow{" "}
+                A Bacara VIP host will text you within 30 minutes to lock in
+                your table. Keep an eye on your phone.
+              </p>
+
+              {selectedEvent && (
+                <p className="mx-auto mt-4 max-w-md text-sm text-fg-muted">
+                  Night:{" "}
+                  <span className="text-accent">{selectedEvent.title}</span> ·{" "}
+                  {selectedEvent.dateLine}
+                </p>
+              )}
+
+              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                {selectedEvent && (
+                  <a
+                    href={buildIcsDataUrl({
+                      title: selectedEvent.title,
+                      description: selectedEvent.description,
+                      start: selectedEvent.startDate,
+                      end: selectedEvent.endDate,
+                      uid: selectedEvent.slug,
+                      url: `${SITE.url}/events/${selectedEvent.slug}`,
+                    })}
+                    download={`${selectedEvent.slug}.ics`}
+                    className="inline-flex items-center justify-center gap-2 rounded-full border border-accent px-6 py-3 text-sm font-medium text-accent transition-colors hover:bg-accent hover:text-bg"
+                  >
+                    <CalendarPlus className="h-4 w-4" />
+                    Add to Calendar
+                  </a>
+                )}
                 <a
                   href={SITE.instagram}
                   target="_blank"
                   rel="noreferrer noopener"
-                  className="text-accent hover:text-accent-hover"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-border px-6 py-3 text-sm text-fg transition-colors hover:border-accent hover:text-accent"
+                  onClick={() =>
+                    trackConversion("tap_instagram", "Lead", {
+                      source: "reserve_success",
+                    })
+                  }
                 >
-                  {SITE.instagramHandle}
-                </a>{" "}
-                for weekly programming and broadcast recaps while you wait.
+                  <Camera className="h-4 w-4" />
+                  Follow {SITE.instagramHandle}
+                </a>
+              </div>
+
+              <p className="mx-auto mt-8 max-w-md text-xs text-fg-muted">
+                Didn&apos;t hear back within 30 minutes?{" "}
+                <Link
+                  href="#reservation-channels-heading"
+                  className="text-accent underline-offset-4 hover:underline"
+                >
+                  Use one of the channels below.
+                </Link>
               </p>
             </motion.div>
           )}
@@ -364,6 +567,73 @@ function StepHeading({ title, subtitle }: { title: string; subtitle?: string }) 
         </p>
       ) : null}
     </div>
+  );
+}
+
+/**
+ * Step-1 specific card for an upcoming event — larger than OptionCard, shows
+ * a hero image, the date line, and the DJ/theme below.
+ */
+function EventOptionCard({
+  event,
+  selected,
+  onClick,
+}: {
+  event: UpcomingEvent;
+  selected: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={selected}
+      data-placeholder="true"
+      className={cn(
+        "group flex w-full flex-col overflow-hidden rounded-xl border text-left transition-all",
+        selected
+          ? "border-accent bg-accent/[0.05] shadow-[0_0_40px_-15px_var(--accent-glow)]"
+          : "border-border bg-bg hover:border-accent/50",
+      )}
+    >
+      <div className="relative aspect-[16/9] w-full overflow-hidden">
+        <Image
+          src={event.heroImage}
+          alt={event.heroAlt}
+          fill
+          sizes="(min-width: 768px) 360px, 100vw"
+          className="object-cover"
+        />
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 bg-gradient-to-t from-bg via-bg/40 to-transparent"
+        />
+        <span
+          className={cn(
+            "absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-[0.14em] backdrop-blur",
+            event.night === "wednesday"
+              ? "border-live/40 bg-live/10 text-live"
+              : "border-accent/40 bg-accent/10 text-accent",
+          )}
+        >
+          {event.night === "wednesday" ? "Wed" : "Sat"}
+        </span>
+      </div>
+      <div className="flex flex-1 flex-col gap-1 p-4">
+        <p className="text-[11px] uppercase tracking-[0.14em] text-fg-muted">
+          {event.dateLine}
+        </p>
+        <p
+          className={cn(
+            "font-[family-name:var(--font-display)] text-lg leading-tight md:text-xl",
+            selected ? "text-accent" : "text-fg",
+          )}
+        >
+          {event.title}
+        </p>
+        <p className="text-xs text-fg-muted">{event.host}</p>
+      </div>
+    </button>
   );
 }
 

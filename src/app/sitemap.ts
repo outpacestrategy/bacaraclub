@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 
 import { SITE } from "@/lib/constants";
+import { UPCOMING_EVENTS } from "@/lib/events";
 
 /**
  * Dynamic sitemap.
@@ -12,9 +13,9 @@ import { SITE } from "@/lib/constants";
  *     (Wednesdays and Saturdays are the ads workhorses, Reserve is the conversion)
  *   - Events, Streamers, Private, Contact, About = mid (0.8), monthly
  *   - FAQ, Gallery, Guestlist = lower (0.6-0.7)
- *
- * When Milestone 5 adds dynamic /events/[slug] pages, extend this function to query the
- * events data source and map each slug into an entry.
+ *   - /events/[slug] — one entry per upcoming event, daily refresh so Google
+ *     picks up lineup changes. Per docs/implementation-plan.md §3.1 each
+ *     canonical event page also emits Event JSON-LD for rich results.
  */
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
@@ -39,10 +40,21 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: "/guestlist", changeFrequency: "weekly", priority: 0.7 },
   ];
 
-  return routes.map((r) => ({
+  const staticEntries = routes.map((r) => ({
     url: `${base}${r.path}`,
     lastModified: now,
     changeFrequency: r.changeFrequency,
     priority: r.priority,
   }));
+
+  // Per-event canonical pages. lastModified = now so Googlebot revisits daily
+  // as the /events/[slug] pages are refreshed in lockstep with UPCOMING_EVENTS.
+  const eventEntries: MetadataRoute.Sitemap = UPCOMING_EVENTS.map((event) => ({
+    url: `${base}/events/${event.slug}`,
+    lastModified: now,
+    changeFrequency: "daily" as const,
+    priority: 0.8,
+  }));
+
+  return [...staticEntries, ...eventEntries];
 }

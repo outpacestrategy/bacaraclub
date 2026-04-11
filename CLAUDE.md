@@ -13,7 +13,7 @@ You are building the Bacara Club website. This file is the source of truth for e
 ## What has already been decided (do not re-litigate)
 All of these are locked. If you think one needs to change, raise it with Drew before touching code.
 
-1. **Tech stack:** Next.js 14+ App Router, TypeScript, Tailwind, shadcn/ui, Framer Motion, GSAP + ScrollTrigger, Spline (hero 3D), Three.js + react-three-fiber (CTA globe), Supabase (contacts + admin CRM), Vercel deployment. This is mandated by the `create-website` skill — do not substitute.
+1. **Tech stack:** Next.js 14+ App Router, TypeScript, Tailwind, shadcn/ui, Framer Motion, GSAP + ScrollTrigger, Spline (hero 3D), Three.js + react-three-fiber (CTA globe), Supabase (contacts + admin CRM), **Netlify deployment** (see `netlify.toml` and `README.md`). This is mandated by the `create-website` skill — do not substitute.
 2. **Design system:** Dark-themed, Delius (headings) + Inter (body), champagne-gold accent `#d4a548`, broadcast-red `#ef4444` for live indicators only. Full spec in `brand/brand-direction.md`.
 3. **Sitemap:** Defined in `docs/site-plan.md`. The URL structure, nav, and page purposes are not open for modification without approval.
 4. **Primary conversion:** `/reserve` multi-step quiz. Not a flat form.
@@ -32,16 +32,18 @@ bacara-club/
 │   ├── site-plan.md                 ← sitemap + page-by-page build spec
 │   ├── seo-geo-strategy.md          ← keywords, schema, GEO, authority
 │   ├── meta-ads-strategy.md         ← campaign structure, pixel events, budget
-│   └── google-business-strategy.md  ← GBP claim, optimization, reviews, cadence
-├── research/                        ← reference screenshots, mona club notes (to be added)
-└── [src/, public/, package.json, etc. to be created by you on first build]
+│   ├── google-business-strategy.md  ← GBP claim, optimization, reviews, cadence
+│   └── implementation-plan.md       ← prioritized amendments from competitive research
+├── research/
+│   └── competitive-analysis.md      ← top Miami nightclub patterns (E11EVEN, LIV, STORY, Mona, Space, etc.)
+└── src/, public/, package.json, netlify.toml, etc. (Next.js app scaffolded)
 ```
 
 ## Your first session checklist
 
 When a new Claude Code session opens this repo, do these in order:
 
-1. **Read** `overview.md`, `docs/site-plan.md`, `docs/seo-geo-strategy.md`, and `brand/brand-direction.md`. Do not skip.
+1. **Read** `overview.md`, `docs/site-plan.md`, `docs/seo-geo-strategy.md`, `brand/brand-direction.md`, `research/competitive-analysis.md`, and `docs/implementation-plan.md`. Do not skip. The implementation plan contains prioritized amendments to the original site plan based on competitive research — apply those amendments as you build.
 2. **Confirm the target directory** is empty of Next.js scaffolding. If `src/` already exists, this isn't a fresh scaffold — go to step 4.
 3. **Scaffold** using the `create-website` skill's Step 1 scaffolding process. Use `bacara-club` as the project name. Install all dependencies listed in the skill (Next.js, Tailwind, shadcn/ui, Framer Motion, GSAP, Three.js, R3F, Spline, Supabase, Zod, Lucide).
 4. **Create the file structure** exactly as defined in `create-website`'s Step 1. Match the pages in `docs/site-plan.md` — Home, `/wednesdays`, `/saturdays`, `/events`, `/reserve`, `/guestlist`, `/streamers`, `/private`, `/about`, `/gallery`, `/contact`, `/faq`, `/admin`.
@@ -90,4 +92,4 @@ When a new Claude Code session opens this repo, do these in order:
 
 ## Handoff status
 
-Repo scaffolded with overview, site plan, SEO/GEO strategy, Meta ads strategy, GBP strategy, and brand direction. **Next.js code has NOT been written yet.** Next session's job is to scaffold the Next.js app per Milestone 1–3 above.
+Repo contains: overview, site plan, SEO/GEO strategy, Meta ads strategy, GBP strategy, brand direction, **competitive research**, and **implementation plan**. Next.js app has been scaffolded (`src/app/*` routes exist for home, about, contact, events, faq, gallery, guestlist, private, reserve, saturdays, streamers, wednesdays). Analytics components, NightClub/Organization/WebSite schema components, sitemap, robots, and Netlify deployment config are in place. **Next session's job:** apply the amendments in `docs/implementation-plan.md` starting with the P0 items — event-first quiz, VIP host SLA, multi-channel reservation paths, hero video spec, Event schema on every upcoming night, GBP cadence increases, and the Live Broadcast indicator (P1).
