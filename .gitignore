@@ -30,8 +30,11 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files — ignore real env files but commit the .example placeholder template
+# so collaborators know which keys to set without ever seeing real values.
 .env*
+!.env.example
+!.env.local.example
 
 # vercel
 .vercel
@@ -39,3 +42,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# claude code workspace — local agent config, hooks, and personal preferences
+.claude/
+
+# brand source masters — raw .mov files belong in cloud storage, not git.
+# The encoded web-ready version we actually serve lives at public/brand/*.mp4.
+brand/*.mov

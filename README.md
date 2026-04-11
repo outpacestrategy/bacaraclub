@@ -1,36 +1,48 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Bacara Club
 
-## Getting Started
+Website, SEO, Google Business Profile, and Meta Ads build for **Bacara Club** — Miami Beach's first streaming nightclub, at 235 23rd St, Miami Beach, FL. Recently acquired by Clavicular. Flagship nights: Wednesday and Saturday. Instagram: [@bacaraclub](https://www.instagram.com/bacaraclub/).
 
-First, run the development server:
+Built by [Outpace Strategy Group](https://outpacestrategygroup.com).
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Status
+
+**Planning complete. Code not yet scaffolded.** This repo currently contains the project brief, site plan, and marketing strategy. The next Claude Code session will scaffold the Next.js app per the milestones in `CLAUDE.md`.
+
+## Start here
+
+If you are a human (or a new Claude session) opening this repo for the first time, read these files in this order:
+
+1. [`CLAUDE.md`](./CLAUDE.md) — project conventions, locked decisions, build milestones, hard rules
+2. [`overview.md`](./overview.md) — who Bacara is, positioning, audience, scope
+3. [`docs/site-plan.md`](./docs/site-plan.md) — sitemap, page-by-page build spec, conversion logic
+4. [`brand/brand-direction.md`](./brand/brand-direction.md) — colors, typography, tone, motion language
+5. [`docs/seo-geo-strategy.md`](./docs/seo-geo-strategy.md) — keyword map, schema, GEO, authority plan
+6. [`docs/meta-ads-strategy.md`](./docs/meta-ads-strategy.md) — campaign structure, pixel events, budget
+7. [`docs/google-business-strategy.md`](./docs/google-business-strategy.md) — GBP claim, optimization, reviews, cadence
+
+## Repo structure
+
+```
+bacara-club/
+├── CLAUDE.md                        # Source of truth for Claude Code sessions
+├── README.md                        # This file
+├── overview.md                      # Client brief
+├── brand/
+│   └── brand-direction.md           # Visual + tone system
+├── docs/
+│   ├── site-plan.md                 # Sitemap + page specs
+│   ├── seo-geo-strategy.md          # Organic search plan
+│   ├── meta-ads-strategy.md         # Paid social plan
+│   └── google-business-strategy.md  # GBP plan
+└── research/                        # Reference material, screenshots, client assets
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Once scaffolding starts, the Next.js app lives alongside these folders in the standard structure defined by the `create-website` skill (`src/`, `public/`, `package.json`, etc.).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Tech stack (locked)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Next.js 14+ App Router · TypeScript · Tailwind CSS · shadcn/ui · Framer Motion · GSAP + ScrollTrigger · Spline (hero) · Three.js + react-three-fiber (CTA globe) · Supabase · Vercel
 
-## Learn More
+## Open questions for the client
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Tracked in [`CLAUDE.md`](./CLAUDE.md) under "Open questions." Before Milestone 1, we need answers on: final domain, GBP ownership status after the acquisition, existing footage, email platform, phone number, and CRM timing.
