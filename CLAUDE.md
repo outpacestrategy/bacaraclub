@@ -92,4 +92,16 @@ When a new Claude Code session opens this repo, do these in order:
 
 ## Handoff status
 
-Repo contains: overview, site plan, SEO/GEO strategy, Meta ads strategy, GBP strategy, brand direction, **competitive research**, and **implementation plan**. Next.js app has been scaffolded (`src/app/*` routes exist for home, about, contact, events, faq, gallery, guestlist, private, reserve, saturdays, streamers, wednesdays). Analytics components, NightClub/Organization/WebSite schema components, sitemap, robots, and Netlify deployment config are in place. **Next session's job:** apply the amendments in `docs/implementation-plan.md` starting with the P0 items — event-first quiz, VIP host SLA, multi-channel reservation paths, hero video spec, Event schema on every upcoming night, GBP cadence increases, and the Live Broadcast indicator (P1).
+Repo contains: overview, site plan, SEO/GEO strategy, Meta ads strategy, GBP strategy, brand direction, **competitive research**, and **implementation plan**. Next.js app is scaffolded and shipping. Analytics components, NightClub/Organization/WebSite schema components, sitemap, robots, and Netlify deployment config are in place.
+
+**P0 complete (commit `44ea25b`, `feat: P0 implementation plan items`):**
+- `src/lib/events.ts` — single source of truth for upcoming Wed/Sat broadcasts
+- `/reserve` rewritten as an event-first quiz with VIP host 30-minute SLA copy + Add-to-Calendar .ics on the success state
+- `ReservationChannels` block on `/reserve`, `/wednesdays`, `/saturdays` (email live, text + Tablelist "Coming soon" slots waiting on real values)
+- `PricingRanges` guidance on `/wednesdays` + `/saturdays` with a visible red placeholder warning banner (awaiting real pricing floors)
+- Hero mobile fallback — phones get the poster via `next/image`, desktop keeps the `<video>`
+- Event JSON-LD per upcoming night across `/`, `/events`, `/wednesdays`, `/saturdays`, plus canonical `/events/[slug]` pages generated via `generateStaticParams`
+- `/api/reserve` POST stub capturing the full event-first payload shape with a TODO marker for Milestone 5 Supabase wiring
+- GBP "Reserve a table" button spec + UTM URL added to `docs/google-business-strategy.md`
+
+**Next session's job:** work P1 from `docs/implementation-plan.md` — Live Broadcast indicator, newsletter capture (blocked on Q3), press strip, deep FAQ, TikTok embed, bilingual captions, creator-program upgrade, first-party gallery. Biggest leverage = Live Broadcast indicator + creator-program upgrade, since both reinforce the "streaming nightclub" differentiator.

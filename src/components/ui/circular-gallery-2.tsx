@@ -738,6 +738,9 @@ export function CircularGallery({
   return (
     <div
       ref={containerRef}
+      // role=region pairs with the consumer-supplied aria-label. Without
+      // a role, Lighthouse flags aria-label on a plain div as prohibited.
+      role="region"
       className={cn(
         "h-full w-full cursor-grab touch-pan-y overflow-hidden active:cursor-grabbing",
         // Defaults the consumer can override. These drive getComputedStyle() above,

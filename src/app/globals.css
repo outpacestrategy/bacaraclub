@@ -12,10 +12,14 @@
   --bg-elevated: #131313;
   --bg-overlay: rgba(10, 10, 10, 0.72);
 
-  /* Foreground */
+  /* Foreground.
+   * fg-subtle was #6b6b6b which clocked 3.71:1 on #0a0a0a — below WCAG AA's
+   * 4.5:1 floor for normal text and flagged by Lighthouse on /. Bumped to
+   * #8a8a8a (≈5.73:1), still visually recessed next to fg-muted (#9a9a9a)
+   * so hierarchy is preserved but small copy is now a11y-compliant. */
   --fg: #f5f5f5;
   --fg-muted: #9a9a9a;
-  --fg-subtle: #6b6b6b;
+  --fg-subtle: #8a8a8a;
 
   /* Brand accents */
   --accent: #d4a548; /* champagne gold — CTAs, highlights, borders */
@@ -131,4 +135,15 @@ h6 {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/*
+ * Ark UI Carousel a11y fix — off-page slides get aria-hidden="true" from
+ * the library, but their inner <a>/<button> elements stay in the tab order,
+ * which Lighthouse flags as `aria-hidden-focus`. Using `visibility: hidden`
+ * removes the subtree from the tab order without affecting the flex layout
+ * that drives the carousel's transform-based pagination.
+ */
+[data-scope="carousel"][data-part="item"][aria-hidden="true"] {
+  visibility: hidden;
 }

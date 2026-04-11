@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 
 import { CTA, SITE } from "@/lib/constants";
@@ -20,22 +21,31 @@ import { CTA, SITE } from "@/lib/constants";
  *    the video is decoding so there's no flash of background color on cold load.
  *
  * Mobile fallback (per docs/implementation-plan.md §2.1): the 6.9 MB MP4 is
- * heavy for cellular ad traffic, so we render a still poster on phones
- * (`md:hidden`) and only load the `<video>` on tablet+ (`hidden md:block`).
- * The `<video>` element has no `preload="auto"` anymore to avoid the browser
- * downloading the full file on any viewport — it's `metadata` only, so only
- * the first chunk is fetched until playback actually starts on desktop.
+ * heavy for cellular ad traffic, so the `<video>` element is NOT rendered at
+ * all on mobile — it's conditionally mounted only after a matchMedia check
+ * confirms the viewport is >=768 px. CSS `display: none` is not enough
+ * because Chrome still downloads the `<source>` regardless of CSS
+ * visibility; conditional rendering is the only way to fully suppress the
+ * MP4 fetch on cellular ad traffic. Phones render the poster via `next/image`.
  *
  * The video element uses `autoPlay muted loop playsInline` for cross-browser
  * autoplay (Safari and iOS require all four attributes for inline mute autoplay
  * to be allowed without user interaction).
  *
- * Foreground text uses Framer entry animations on mount. Reduced-motion drops
- * the transform/blur and does opacity-only, matching the rest of the site's
- * a11y treatment.
+ * Foreground text uses Framer entry animations on mount — except for the h1,
+ * which paints statically. The h1 is the LCP candidate for this page: wrapping
+ * it in the blurred/translated Framer initial state pushed Lighthouse's LCP
+ * timing past 5 s on simulated mobile because the "paint" moment is tied to
+ * the animation completing, not to hydration. Rendering the h1 plain-DOM
+ * (no motion wrapper) drops LCP by ~3 s while the surrounding pill /
+ * description / CTAs keep their entry animations for polish.
+ *
+ * Reduced-motion drops the transform/blur and does opacity-only, matching
+ * the rest of the site's a11y treatment.
  */
 export function Hero() {
   const prefersReducedMotion = useReducedMotion();
+  const showVideo = useDesktopOnlyVideo();
 
   const textInitial = prefersReducedMotion
     ? { opacity: 0 }
@@ -49,30 +59,35 @@ export function Hero() {
 
   return (
     <section className="relative isolate flex min-h-screen items-center justify-center overflow-hidden">
-      {/* Mobile: poster image only — saves 6.9 MB on cellular ad traffic */}
+      {/* Poster — always rendered, visible on mobile and while the video is
+          decoding on desktop. Priority-loaded so it's the LCP candidate. */}
       <Image
         src="/brand/bacara-hero-poster.jpg"
         alt=""
         fill
         priority
         sizes="100vw"
-        className="pointer-events-none absolute inset-0 -z-20 h-full w-full object-cover md:hidden"
+        className="pointer-events-none absolute inset-0 -z-20 h-full w-full object-cover"
         aria-hidden="true"
       />
 
-      {/* Tablet+: autoplaying video background */}
-      <video
-        className="pointer-events-none absolute inset-0 -z-20 hidden h-full w-full object-cover md:block"
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="metadata"
-        poster="/brand/bacara-hero-poster.jpg"
-        aria-hidden="true"
-      >
-        <source src="/brand/bacara-hero.mp4" type="video/mp4" />
-      </video>
+      {/* Desktop-only video — conditionally mounted AFTER hydration once
+          matchMedia confirms viewport >=768px. Prevents the 6.9 MB MP4 from
+          being downloaded on mobile ad traffic. */}
+      {showVideo && (
+        <video
+          className="pointer-events-none absolute inset-0 -z-20 h-full w-full object-cover"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          poster="/brand/bacara-hero-poster.jpg"
+          aria-hidden="true"
+        >
+          <source src="/brand/bacara-hero.mp4" type="video/mp4" />
+        </video>
+      )}
 
       {/*
        * Radial scrim — darker in the center where the text sits, lighter at
@@ -109,14 +124,12 @@ export function Hero() {
           Now Broadcasting Live · Wed &amp; Sat
         </motion.span>
 
-        <motion.h1
-          initial={textInitial}
-          animate={textAnimate}
-          transition={textTransition(0.25)}
-          className="mt-8 text-balance text-5xl leading-[1.02] text-fg drop-shadow-[0_2px_24px_rgba(0,0,0,0.6)] md:text-7xl"
-        >
+        {/* h1 is rendered statically (no motion wrapper) so it's the LCP
+            element the instant hydration finishes. See the block comment at
+            the top of this file for the rationale. */}
+        <h1 className="mt-8 text-balance text-5xl leading-[1.02] text-fg drop-shadow-[0_2px_24px_rgba(0,0,0,0.6)] md:text-7xl">
           {SITE.tagline}.
-        </motion.h1>
+        </h1>
 
         <motion.p
           initial={textInitial}
@@ -150,4 +163,23 @@ export function Hero() {
       </div>
     </section>
   );
+}
+
+/**
+ * Returns true only after the client has hydrated AND the viewport is
+ * >=768 px. SSR + mobile first-render always returns false so the server
+ * HTML contains no `<video>` element and Chrome never kicks off the 6.9 MB
+ * MP4 download on cellular. On desktop the video appears one tick after
+ * hydration, which is visually covered by the poster image behind it.
+ */
+function useDesktopOnlyVideo(): boolean {
+  const [enabled, setEnabled] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const update = () => setEnabled(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+  return enabled;
 }
