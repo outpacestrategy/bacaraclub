@@ -1,70 +1,48 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { Carousel } from "@ark-ui/react/carousel";
+import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { SectionHeader } from "@/components/sections/SectionHeader";
-import { PLACEHOLDER_EVENTS } from "@/lib/placeholder-data";
+import { PLACEHOLDER_EVENTS, type PlaceholderEvent } from "@/lib/placeholder-data";
 import { cn } from "@/lib/utils";
 
 /**
- * Upcoming Events — horizontal snap carousel.
+ * Upcoming Events — Ark UI headless carousel.
  *
- * Structural reference: monaclub.miami "Upcoming Events" strip. We keep the scroll carousel
- * pattern because it's proven to convert (low friction, finger-swipe on mobile, arrow keys
- * and chevron buttons on desktop), but we swap the red "BOOK NOW" buttons for champagne-gold
- * "Reserve" buttons per brand rules (red is reserved for live indicators only).
+ * Structural reference: monaclub.miami "Upcoming Events" strip. We keep the
+ * same multi-card-per-page behavior (1 on phones, 2 on tablets, 3 on desktop)
+ * with chevron prev/next + click-and-drag, but the underlying mechanics are
+ * now Ark UI's `Carousel.Root` instead of a hand-rolled scroll-snap container.
  *
- * Navigation strategy:
- *  - Native overflow-x-auto with scroll-snap-x mandatory
- *  - Chevron buttons scroll by one card width
- *  - Buttons auto-hide when scrolled fully left/right (no useless arrows)
- *  - Keyboard: left/right arrows scroll when the carousel is focus-within
+ * Why Ark UI here:
+ *  - Built-in keyboard navigation (←/→), focus management, ARIA roles
+ *  - Built-in prev/next disabled state at page boundaries (no manual scroll
+ *    edge-detection like the old version had)
+ *  - Page-based navigation (jumps a full row of cards per click) instead of
+ *    pixel-based scrollBy() math, which means the carousel always lands on a
+ *    snapped column regardless of card width
+ *  - Drag support out of the box (`allowMouseDrag`)
+ *
+ * Visual contract preserved 1:1 from the previous version:
+ *  - Champagne-gold "Reserve" buttons (NOT red) per the brand rule that red is
+ *    reserved for live indicators only
+ *  - Gradient placeholder covers, Wed/Sat day pill (Wed pulses red, Sat is
+ *    gold), Bodoni Moda title, dateLine + host metadata
+ *  - Framer entry animations on each card (whileInView with stagger)
+ *  - Edge fades on the left/right of the carousel viewport (desktop only)
+ *  - Champagne-gold pill indicator dots below the carousel
+ *
+ * The brand rule check: a hard rule in CLAUDE.md says "Never ship a fake
+ * number". Every card here is marked `data-placeholder="true"` so a pre-launch
+ * QA pass can grep the built HTML and verify nothing made it to production.
  */
 export function UpcomingEvents() {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
-  const prefersReducedMotion = useReducedMotion();
-
-  const updateScrollState = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    setCanScrollLeft(el.scrollLeft > 4);
-    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
-  }, []);
-
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    updateScrollState();
-    el.addEventListener("scroll", updateScrollState, { passive: true });
-    window.addEventListener("resize", updateScrollState);
-    return () => {
-      el.removeEventListener("scroll", updateScrollState);
-      window.removeEventListener("resize", updateScrollState);
-    };
-  }, [updateScrollState]);
-
-  const scrollByCard = (direction: -1 | 1) => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const firstCard = el.querySelector<HTMLElement>("article");
-    const cardWidth = firstCard ? firstCard.offsetWidth + 24 /* gap */ : 320;
-    el.scrollBy({ left: direction * cardWidth, behavior: "smooth" });
-  };
-
-  const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === "ArrowLeft") {
-      e.preventDefault();
-      scrollByCard(-1);
-    } else if (e.key === "ArrowRight") {
-      e.preventDefault();
-      scrollByCard(1);
-    }
-  };
+  const slidesPerPage = useSlidesPerPage();
+  const pageCount = Math.ceil(PLACEHOLDER_EVENTS.length / slidesPerPage);
 
   return (
     <section id="events" className="relative py-24 md:py-32">
@@ -76,67 +54,68 @@ export function UpcomingEvents() {
           description="Every Wednesday and Saturday, on air and in the room. Book your table before the stream goes live."
         />
 
-        <div
-          className="relative mt-14"
-          role="region"
-          aria-roledescription="carousel"
+        <Carousel.Root
+          defaultPage={0}
+          slideCount={PLACEHOLDER_EVENTS.length}
+          slidesPerPage={slidesPerPage}
+          slidesPerMove="auto"
+          spacing="1.5rem"
+          allowMouseDrag
+          className="mt-14"
           aria-label="Upcoming events"
-          tabIndex={0}
-          onKeyDown={onKeyDown}
         >
-          {/* Chevron buttons (desktop). On mobile users swipe. */}
-          <AnimatePresence>
-            {canScrollLeft && (
-              <motion.button
-                key="left"
-                type="button"
-                onClick={() => scrollByCard(-1)}
-                initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, x: -8 }}
-                transition={{ duration: 0.2 }}
-                className="absolute left-0 top-1/2 z-20 hidden h-12 w-12 -translate-x-4 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-bg/80 text-fg backdrop-blur transition-colors hover:border-accent hover:text-accent md:inline-flex"
+          <div className="relative">
+            {/* Edge fades on desktop only — keeps the carousel visually
+                continuous with the dark page background. */}
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-y-0 left-0 z-10 hidden w-12 bg-gradient-to-r from-bg to-transparent md:block"
+            />
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-y-0 right-0 z-10 hidden w-12 bg-gradient-to-l from-bg to-transparent md:block"
+            />
+
+            {/* Chevron buttons. Ark UI sets the HTML `disabled` attribute on
+                the trigger when the carousel is at the first/last page, so
+                Tailwind's `disabled:` variants drive the dimmed state. */}
+            <Carousel.Control className="pointer-events-none absolute inset-x-0 top-1/2 z-20 hidden -translate-y-1/2 items-center justify-between md:flex">
+              <Carousel.PrevTrigger
                 aria-label="Previous events"
+                className="pointer-events-auto -ml-4 inline-flex h-12 w-12 items-center justify-center rounded-full border border-border bg-bg/80 text-fg backdrop-blur transition-colors hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-25 disabled:hover:border-border disabled:hover:text-fg"
               >
                 <ChevronLeft className="h-5 w-5" />
-              </motion.button>
-            )}
-            {canScrollRight && (
-              <motion.button
-                key="right"
-                type="button"
-                onClick={() => scrollByCard(1)}
-                initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, x: 8 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, x: 8 }}
-                transition={{ duration: 0.2 }}
-                className="absolute right-0 top-1/2 z-20 hidden h-12 w-12 -translate-y-1/2 translate-x-4 items-center justify-center rounded-full border border-border bg-bg/80 text-fg backdrop-blur transition-colors hover:border-accent hover:text-accent md:inline-flex"
+              </Carousel.PrevTrigger>
+              <Carousel.NextTrigger
                 aria-label="Next events"
+                className="pointer-events-auto -mr-4 inline-flex h-12 w-12 items-center justify-center rounded-full border border-border bg-bg/80 text-fg backdrop-blur transition-colors hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-25 disabled:hover:border-border disabled:hover:text-fg"
               >
                 <ChevronRight className="h-5 w-5" />
-              </motion.button>
-            )}
-          </AnimatePresence>
+              </Carousel.NextTrigger>
+            </Carousel.Control>
 
-          {/* Edge fades on desktop only */}
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-y-0 left-0 z-10 hidden w-12 bg-gradient-to-r from-bg to-transparent md:block"
-          />
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-y-0 right-0 z-10 hidden w-12 bg-gradient-to-l from-bg to-transparent md:block"
-          />
-
-          <div
-            ref={scrollRef}
-            className="-mx-5 flex snap-x snap-mandatory gap-6 overflow-x-auto px-5 pb-6 [scrollbar-width:none] md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden"
-          >
-            {PLACEHOLDER_EVENTS.map((event, i) => (
-              <EventCard key={event.slug} event={event} index={i} />
-            ))}
+            <Carousel.ItemGroup className="overflow-hidden">
+              {PLACEHOLDER_EVENTS.map((event, i) => (
+                <Carousel.Item key={event.slug} index={i} className="h-auto">
+                  <EventCard event={event} index={i} />
+                </Carousel.Item>
+              ))}
+            </Carousel.ItemGroup>
           </div>
-        </div>
+
+          {/* Indicator dots — one per PAGE, not per slide. Math.ceil so a
+              non-divisible number of slides still gets a final partial page. */}
+          <Carousel.IndicatorGroup className="mt-8 flex justify-center gap-2">
+            {Array.from({ length: pageCount }).map((_, i) => (
+              <Carousel.Indicator
+                key={i}
+                index={i}
+                aria-label={`Go to page ${i + 1}`}
+                className="h-1 w-8 cursor-pointer rounded-full bg-border transition-colors hover:bg-fg-muted data-[current]:bg-accent"
+              />
+            ))}
+          </Carousel.IndicatorGroup>
+        </Carousel.Root>
 
         <div className="mt-10 text-center">
           <Link
@@ -152,11 +131,37 @@ export function UpcomingEvents() {
   );
 }
 
+/**
+ * Returns the active `slidesPerPage` value driven by `matchMedia`. Mobile-first
+ * default of 1 minimizes the worst-case hydration mismatch: a brief
+ * "1 → 3 cards" flash on desktop is visually fine (just shows fewer-but-larger
+ * cards before settling), whereas starting at 3 would give mobile users a
+ * "3 squished cards → 1 card" flash that looks broken.
+ */
+function useSlidesPerPage(): number {
+  const [count, setCount] = useState(1);
+
+  useEffect(() => {
+    const lg = window.matchMedia("(min-width: 1024px)");
+    const md = window.matchMedia("(min-width: 768px)");
+    const update = () => setCount(lg.matches ? 3 : md.matches ? 2 : 1);
+    update();
+    lg.addEventListener("change", update);
+    md.addEventListener("change", update);
+    return () => {
+      lg.removeEventListener("change", update);
+      md.removeEventListener("change", update);
+    };
+  }, []);
+
+  return count;
+}
+
 function EventCard({
   event,
   index,
 }: {
-  event: (typeof PLACEHOLDER_EVENTS)[number];
+  event: PlaceholderEvent;
   index: number;
 }) {
   const prefersReducedMotion = useReducedMotion();
@@ -176,13 +181,13 @@ function EventCard({
         delay: index * 0.07,
         ease: [0.25, 0.4, 0.25, 1],
       }}
-      className="group relative flex min-w-[260px] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-border bg-bg-elevated transition-colors hover:border-accent/40 sm:min-w-[300px] md:min-w-[320px]"
+      className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-bg-elevated transition-colors hover:border-accent/40"
     >
       {/* Card cover — placeholder gradient until client supplies real imagery */}
       <div
         className={cn(
           "relative aspect-[4/5] overflow-hidden bg-gradient-to-br",
-          event.gradient
+          event.gradient,
         )}
       >
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_100%_60%_at_50%_110%,rgba(0,0,0,0.8),transparent_70%)]" />
@@ -192,7 +197,7 @@ function EventCard({
               "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-[0.14em] backdrop-blur",
               event.night === "wednesday"
                 ? "border-live/40 bg-live/10 text-live"
-                : "border-accent/40 bg-accent/10 text-accent"
+                : "border-accent/40 bg-accent/10 text-accent",
             )}
           >
             {event.night === "wednesday" ? (
@@ -216,7 +221,7 @@ function EventCard({
       </div>
 
       {/* Card body */}
-      <div className="flex flex-col gap-4 p-6">
+      <div className="flex flex-1 flex-col gap-4 p-6">
         <div>
           <p className="text-[11px] uppercase tracking-[0.18em] text-fg-muted">
             {event.dateLine}
@@ -226,7 +231,7 @@ function EventCard({
 
         <Link
           href={`/reserve?night=${event.night}`}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-accent/60 px-5 py-2.5 text-sm font-medium text-accent transition-colors hover:bg-accent hover:text-bg"
+          className="mt-auto inline-flex w-full items-center justify-center gap-2 rounded-full border border-accent/60 px-5 py-2.5 text-sm font-medium text-accent transition-colors hover:bg-accent hover:text-bg"
         >
           Reserve
           <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />

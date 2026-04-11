@@ -61,6 +61,15 @@ export function NightClubSchema() {
       "@type": "City",
       name: "Miami Beach",
     },
+    // Amenity hints for Knowledge Panel — factual, non-fabricated claims about
+    // the venue's offering. These help Google classify the entity and surface
+    // the right filters in the Local Pack ("bottle service", "live music").
+    amenityFeature: [
+      { "@type": "LocationFeatureSpecification", name: "Bottle service", value: true },
+      { "@type": "LocationFeatureSpecification", name: "Live DJ", value: true },
+      { "@type": "LocationFeatureSpecification", name: "Private events", value: true },
+      { "@type": "LocationFeatureSpecification", name: "Reservations", value: true },
+    ],
     // Phone + priceRange deliberately omitted — Open Questions #5 and #6 in CLAUDE.md.
     // Drew to confirm both before launch; add here once confirmed.
   };

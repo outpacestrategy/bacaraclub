@@ -1,0 +1,58 @@
+# Netlify build configuration for Bacara Club (Next.js 16 App Router).
+#
+# Netlify auto-detects Next.js and installs @netlify/plugin-nextjs, which
+# handles SSR/ISR, image optimization, middleware, and App Router routing.
+# The publish directory stays ".next" — the plugin adapts it at build time
+# for the Netlify edge/functions runtime. Do NOT set `publish = "out"` here
+# unless switching to a fully static export (we aren't — /reserve will hit
+# Supabase from a server action).
+#
+# Environment variables (NEXT_PUBLIC_* + secrets) MUST be configured in the
+# Netlify UI under Site settings → Environment variables. See README.md for
+# the authoritative list. .env.local is gitignored and not uploaded.
+
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  # Node 20 matches the engines range Next.js 16 + React 19 officially support.
+  NODE_VERSION = "20"
+  # Silence Next.js telemetry on CI — we opt out per-project.
+  NEXT_TELEMETRY_DISABLED = "1"
+
+# The Next.js plugin is auto-installed by Netlify when a Next.js project is
+# detected, but declaring it explicitly makes the dependency contract visible
+# and prevents silent failures if auto-detection ever changes upstream.
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# -----------------------------------------------------------------------------
+# Security headers — mirrors vercel.json so the site ships with the same
+# baseline regardless of which host is serving it. Mandatory per the
+# CLAUDE.md security pass checklist.
+# -----------------------------------------------------------------------------
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "SAMEORIGIN"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), interest-cohort=()"
+    X-DNS-Prefetch-Control = "on"
+
+# Long-cache the hand-crafted brand assets (wordmark, hero poster, hero mp4,
+# logo). These are content-hashed by filename changes, not by query string, so
+# we cache them for a year and bust via rename when updated.
+[[headers]]
+  for = "/brand/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Next.js already serves /_next/static with immutable headers by default, but
+# Netlify's edge can override those unless we echo them here explicitly.
+[[headers]]
+  for = "/_next/static/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

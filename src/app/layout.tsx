@@ -2,6 +2,9 @@ import type { Metadata, Viewport } from "next";
 import { Bodoni_Moda, Inter } from "next/font/google";
 
 import "./globals.css";
+import { AnalyticsRouteListener } from "@/components/analytics/AnalyticsRouteListener";
+import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
+import { MetaPixel } from "@/components/analytics/MetaPixel";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { SITE } from "@/lib/constants";
@@ -91,6 +94,30 @@ export const metadata: Metadata = {
   alternates: {
     canonical: SITE.url,
   },
+  /*
+   * Site verification — each host gets a tiny meta tag proving ownership of the
+   * domain. Values come from environment variables set in the Netlify UI so
+   * that the source tree never contains host-specific tokens, and so that
+   * preview deploys don't leak verification into Google's index.
+   *
+   *  - NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION → Google Search Console
+   *    (Alternative: drop `google<hash>.html` into /public/. This meta-tag
+   *    approach is cleaner for App Router and lives alongside the other tags.)
+   *  - NEXT_PUBLIC_FB_DOMAIN_VERIFICATION → Meta Business domain verification
+   *    (required so the pixel can fire on :hover/click without warnings and
+   *     so iOS 14+ aggregated events attribute correctly).
+   */
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+    other: {
+      ...(process.env.NEXT_PUBLIC_FB_DOMAIN_VERIFICATION
+        ? {
+            "facebook-domain-verification":
+              process.env.NEXT_PUBLIC_FB_DOMAIN_VERIFICATION,
+          }
+        : {}),
+    },
+  },
   // No explicit `icons` block — Next.js App Router auto-detects `src/app/icon.png`
   // and `src/app/apple-icon.png` and wires the correct <link> tags into the document
   // head at build time. See scripts/generate-icons.mjs for how those files are built.
@@ -116,6 +143,16 @@ export default function RootLayout({
       className={`${bodoniModa.variable} ${inter.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-bg text-fg">
+        {/*
+         * Analytics — both components render nothing when their env vars are
+         * missing, so preview deploys and local dev stay beacon-free until
+         * the real IDs are set in the Netlify dashboard. The route listener
+         * handles SPA-style pageviews on every <Link> navigation.
+         */}
+        <GoogleAnalytics />
+        <MetaPixel />
+        <AnalyticsRouteListener />
+
         <Header />
         <main className="flex-1">{children}</main>
         <Footer />

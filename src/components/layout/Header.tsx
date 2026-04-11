@@ -7,69 +7,84 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 
 import { CTA, PRIMARY_NAV, SITE } from "@/lib/constants";
-import { cn } from "@/lib/utils";
 
 /**
- * Sticky top nav.
- * - Transparent at the top of the page, fades to a solid translucent bar once the user scrolls
- *   past the hero (64px of scroll is enough to be clearly past the top).
- * - Mobile: hamburger opens a full-screen drawer with staggered links.
- * - Respects prefers-reduced-motion.
- * - Final item in the desktop row is the Reserve CTA (not a nav link) per site-plan.md.
+ * Sticky top nav — Mona-style centered layout.
+ *
+ * Three-column grid that holds its shape from 375 px through 4K:
+ *   [hamburger]            [centered wordmark]            [reserve a table]
+ *
+ * - All routes live behind the hamburger, at every viewport size. There's no
+ *   desktop inline nav — clicking the menu opens a full-screen overlay drawer
+ *   with the nav links centered in big Bodoni Moda. This keeps the header
+ *   visually quiet so the hero/video can dominate the fold.
+ * - Logo is centered to the viewport, not to the available space between the
+ *   left and right items. The 3-column grid (1fr 1fr 1fr) guarantees this even
+ *   when the left and right column contents have different widths.
+ * - Reserve a Table on the right is plain white text inside a subtle border —
+ *   no champagne-gold pill background. Champagne-gold is reserved for the
+ *   hero CTAs and section CTAs where conversion-pop matters most.
+ * - Header is transparent at the very top of the page, fades to a solid
+ *   translucent bar once the user scrolls past the first 16 px, AND becomes
+ *   solid whenever the drawer is open (so the drawer's bg lines up with the
+ *   header bar).
+ * - Respects prefers-reduced-motion across the drawer entrance and link
+ *   stagger.
  */
 export function Header() {
-  const [scrolled, setScrolled] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const prefersReducedMotion = useReducedMotion();
 
+  // Lock body scroll while the drawer is open so the page underneath doesn't move.
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 16);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  // Lock body scroll while the mobile drawer is open.
-  useEffect(() => {
-    if (mobileOpen) {
+    if (menuOpen) {
       const prev = document.body.style.overflow;
       document.body.style.overflow = "hidden";
       return () => {
         document.body.style.overflow = prev;
       };
     }
-  }, [mobileOpen]);
+  }, [menuOpen]);
 
-  // Close the drawer on Escape.
+  // Close on Escape.
   useEffect(() => {
-    if (!mobileOpen) return;
+    if (!menuOpen) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setMobileOpen(false);
+      if (e.key === "Escape") setMenuOpen(false);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [mobileOpen]);
+  }, [menuOpen]);
 
-  const closeMobile = () => setMobileOpen(false);
+  const closeMenu = () => setMenuOpen(false);
 
   return (
-    <header
-      className={cn(
-        "sticky inset-x-0 top-0 z-50 transition-[background-color,backdrop-filter,border-color] duration-300",
-        scrolled
-          ? "bg-bg-overlay border-b border-border backdrop-blur-xl"
-          : "bg-transparent border-b border-transparent"
-      )}
-    >
-      <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-5 md:px-8">
-        {/* Brand mark — landscape white wordmark on transparent.
-            The wordmark is 1024×472 (roughly 2.17:1). At 40px tall that's ~87px wide,
-            which gives the header row a clean, premium typographic mark that sits on
-            the dark page background with no surrounding box. */}
+    <>
+      {/* Static positioning — header sits in normal document flow at the top of the
+          page and scrolls away with everything else (no longer follows the user
+          down). No background, no border, no backdrop-blur, no scroll-state fade —
+          maximally transparent so the hero video underneath is uninterrupted. The
+          logo / hamburger / Reserve link float over the page content. */}
+      <header className="static z-50">
+        <div className="mx-auto grid h-16 w-full max-w-7xl grid-cols-3 items-center px-5 md:px-8">
+        {/* Left: hamburger / close button */}
+        <button
+          type="button"
+          onClick={() => setMenuOpen((v) => !v)}
+          className="inline-flex h-10 w-10 items-center justify-center justify-self-start rounded-full text-fg transition-colors hover:text-accent"
+          aria-expanded={menuOpen}
+          aria-controls="primary-menu"
+          aria-label={menuOpen ? "Close menu" : "Open menu"}
+        >
+          {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        </button>
+
+        {/* Center: brand mark.
+            The wordmark is 1024×472 (~2.17:1). At 40 px tall = ~87 px wide. */}
         <Link
           href="/"
-          onClick={closeMobile}
-          className="group flex items-center gap-4"
+          onClick={closeMenu}
+          className="group justify-self-center"
           aria-label={`${SITE.name} — home`}
         >
           <Image
@@ -78,105 +93,113 @@ export function Header() {
             width={87}
             height={40}
             priority
-            className="h-10 w-auto transition-opacity group-hover:opacity-90"
+            className="h-9 w-auto transition-opacity group-hover:opacity-90 sm:h-10"
           />
-          <span
-            className="hidden items-center gap-1.5 rounded-full border border-border px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] text-fg-muted sm:inline-flex"
-            aria-hidden="true"
-          >
-            <span className="relative flex h-1.5 w-1.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-live opacity-70" />
-              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-live" />
-            </span>
-            On Air Wed &amp; Sat
-          </span>
         </Link>
 
-        {/* Desktop nav */}
-        <nav aria-label="Primary" className="hidden items-center gap-8 md:flex">
-          {PRIMARY_NAV.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="text-sm text-fg-muted transition-colors hover:text-fg"
-            >
-              {link.label}
-            </Link>
-          ))}
-          <Link
-            href={CTA.reserve.href}
-            className="inline-flex items-center rounded-full border border-accent bg-accent px-5 py-2 text-sm font-medium text-bg transition-colors hover:bg-accent-hover"
-          >
-            {CTA.reserve.label}
-          </Link>
-        </nav>
-
-        {/* Mobile toggle */}
-        <button
-          type="button"
-          onClick={() => setMobileOpen((v) => !v)}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border text-fg transition-colors hover:border-accent hover:text-accent md:hidden"
-          aria-expanded={mobileOpen}
-          aria-controls="mobile-nav"
-          aria-label={mobileOpen ? "Close menu" : "Open menu"}
+        {/* Right: Reserve a Table — plain white text inside a subtle border, no fill.
+            Hidden on mobile (the Reserve CTA still lives in the drawer for those users,
+            so we save the header chrome for the logo + hamburger only). The grid
+            column itself stays (grid-cols-3 doesn't collapse on display:none children),
+            which is what keeps the logo perfectly centered to the viewport even when
+            the right cell has nothing visible in it. */}
+        <Link
+          href={CTA.reserve.href}
+          onClick={closeMenu}
+          className="hidden items-center justify-self-end rounded-full border border-border px-5 py-2 text-[11px] uppercase tracking-[0.16em] text-fg transition-colors hover:border-fg sm:inline-flex"
         >
-          {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
+          {CTA.reserve.label}
+        </Link>
       </div>
-
-      {/* Mobile drawer */}
-      <AnimatePresence>
-        {mobileOpen && (
-          <motion.div
-            id="mobile-nav"
-            initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: -12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: -8 }}
-            transition={{ duration: 0.24, ease: [0.25, 0.4, 0.25, 1] }}
-            className="md:hidden"
-          >
-            <div className="border-t border-border bg-bg/95 backdrop-blur-xl">
-              <nav
-                aria-label="Primary mobile"
-                className="mx-auto flex w-full max-w-7xl flex-col gap-1 px-5 py-6"
-              >
-                {PRIMARY_NAV.map((link, i) => (
-                  <motion.div
-                    key={link.href}
-                    initial={
-                      prefersReducedMotion ? { opacity: 0 } : { opacity: 0, x: -12 }
-                    }
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.24, delay: 0.05 + i * 0.04 }}
-                  >
-                    <Link
-                      href={link.href}
-                      onClick={closeMobile}
-                      className="block rounded-lg px-3 py-3 font-[family-name:var(--font-display)] text-2xl text-fg transition-colors hover:bg-bg-elevated hover:text-accent"
-                    >
-                      {link.label}
-                    </Link>
-                  </motion.div>
-                ))}
-                <motion.div
-                  initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.28, delay: 0.05 + PRIMARY_NAV.length * 0.04 }}
-                  className="mt-4"
-                >
-                  <Link
-                    href={CTA.reserve.href}
-                    onClick={closeMobile}
-                    className="flex w-full items-center justify-center rounded-full bg-accent px-5 py-3 text-base font-medium text-bg transition-colors hover:bg-accent-hover"
-                  >
-                    {CTA.reserve.label}
-                  </Link>
-                </motion.div>
-              </nav>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </header>
+
+    {/* Full-screen drawer — rendered as a SIBLING of <header>, NOT a child.
+        The header has backdrop-blur, which creates a CSS containing block for
+        position:fixed descendants. If the drawer were a child of <header>,
+        `top-16 bottom-0` would be measured against the 64px-tall header instead
+        of the viewport, collapsing the drawer to zero height. Hoisting it to
+        the fragment level makes the body the containing block, so the fixed
+        positioning resolves against the viewport as intended. */}
+    <AnimatePresence>
+      {menuOpen && (
+        <motion.div
+          id="primary-menu"
+          initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.28, ease: [0.25, 0.4, 0.25, 1] }}
+          className="fixed inset-x-0 bottom-0 top-16 z-40 overflow-y-auto bg-bg/95 backdrop-blur-xl"
+        >
+          {/* Subtle radial glow inside the drawer to match the rest of the site's lighting language. */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_50%_30%,rgba(212,165,72,0.07),transparent_70%)]"
+          />
+
+          <nav
+            aria-label="Primary"
+            className="relative mx-auto flex min-h-full max-w-3xl flex-col items-center justify-center gap-3 px-5 py-16 sm:gap-4 sm:py-24"
+          >
+            {PRIMARY_NAV.map((link, i) => (
+              <motion.div
+                key={link.href}
+                initial={
+                  prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 16 }
+                }
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: 0.4,
+                  delay: 0.06 + i * 0.05,
+                  ease: [0.25, 0.4, 0.25, 1],
+                }}
+              >
+                <Link
+                  href={link.href}
+                  onClick={closeMenu}
+                  className="block font-[family-name:var(--font-display)] text-5xl leading-none text-fg transition-colors hover:text-accent sm:text-6xl md:text-7xl"
+                >
+                  {link.label}
+                </Link>
+              </motion.div>
+            ))}
+
+            {/* Reserve CTA at the bottom of the menu — gold pill here for emphasis,
+                unlike the always-visible header version which is intentionally quiet. */}
+            <motion.div
+              initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: 0.4,
+                delay: 0.06 + PRIMARY_NAV.length * 0.05,
+                ease: [0.25, 0.4, 0.25, 1],
+              }}
+              className="mt-8"
+            >
+              <Link
+                href={CTA.reserve.href}
+                onClick={closeMenu}
+                className="inline-flex items-center justify-center rounded-full bg-accent px-7 py-3 text-sm font-medium text-bg shadow-[0_0_60px_-12px_var(--accent-glow)] transition-colors hover:bg-accent-hover"
+              >
+                {CTA.reserve.label}
+              </Link>
+            </motion.div>
+
+            {/* Address footer inside the drawer — small premium touch. */}
+            <motion.div
+              initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{
+                duration: 0.4,
+                delay: 0.06 + (PRIMARY_NAV.length + 1) * 0.05,
+              }}
+              className="mt-12 text-center text-xs uppercase tracking-[0.18em] text-fg-subtle"
+            >
+              235 23rd St · Miami Beach · Wed–Sat
+            </motion.div>
+          </nav>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  </>
   );
 }

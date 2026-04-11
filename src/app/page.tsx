@@ -1,4 +1,5 @@
 import { NightClubSchema } from "@/components/seo/NightClubSchema";
+import { OrganizationSchema } from "@/components/seo/OrganizationSchema";
 import { WebSiteSchema } from "@/components/seo/WebSiteSchema";
 import { Experience3DCarousel } from "@/components/sections/Experience3DCarousel";
 import { FAQ } from "@/components/sections/FAQ";
@@ -30,8 +31,10 @@ import { UpcomingEvents } from "@/components/sections/UpcomingEvents";
 export default function Home() {
   return (
     <>
-      {/* JSON-LD schemas — NightClub for Google Local Pack, WebSite for sitelinks search */}
+      {/* JSON-LD schemas — NightClub for Local Pack, Organization for the
+          Knowledge Panel, WebSite for sitelinks search */}
       <NightClubSchema />
+      <OrganizationSchema />
       <WebSiteSchema />
 
       <Hero />
