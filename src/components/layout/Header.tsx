@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 
+import { LiveBadge } from "@/components/layout/LiveBadge";
 import { CTA, PRIMARY_NAV, SITE } from "@/lib/constants";
 
 /**
@@ -67,17 +68,36 @@ export function Header() {
           logo / hamburger / Reserve link float over the page content. */}
       <header className="static z-50">
         <div className="mx-auto grid h-16 w-full max-w-7xl grid-cols-3 items-center px-5 md:px-8">
-        {/* Left: hamburger / close button */}
-        <button
-          type="button"
-          onClick={() => setMenuOpen((v) => !v)}
-          className="inline-flex h-10 w-10 items-center justify-center justify-self-start rounded-full text-fg transition-colors hover:text-accent"
-          aria-expanded={menuOpen}
-          aria-controls="primary-menu"
-          aria-label={menuOpen ? "Close menu" : "Open menu"}
-        >
-          {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
+        {/* Left: hamburger + Live Broadcast indicator.
+            Wrapping the button and LiveBadge in a flex container lets both
+            sit inside the same grid cell as a single justify-self-start
+            unit. `grid-cols-3` cells are a strict 1/3 each, so this does
+            NOT shift the centered logo even if the content overflows the
+            cell on an intermediate breakpoint. The LiveBadge hides on
+            sub-sm to keep the 375px viewport chrome tight — the home
+            hero's "NOW BROADCASTING LIVE" pill already reinforces the
+            streaming positioning for mobile home visitors. */}
+        <div className="flex items-center gap-3 justify-self-start">
+          <button
+            type="button"
+            onClick={() => setMenuOpen((v) => !v)}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full text-fg transition-colors hover:text-accent"
+            aria-expanded={menuOpen}
+            aria-controls="primary-menu"
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+          >
+            {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+          {/* Badge is wrapped (rather than receiving `hidden sm:inline-flex`
+              directly) because the LiveBadge root already owns `inline-flex`
+              and both classes end up with identical specificity — stylesheet
+              order then determines the winner, which is non-obvious across
+              Tailwind builds. A wrapper gives us a single, unambiguous
+              display toggle. */}
+          <span className="hidden sm:inline-flex">
+            <LiveBadge />
+          </span>
+        </div>
 
         {/* Center: brand mark.
             The wordmark is 1024×472 (~2.17:1). At 40 px tall = ~87 px wide. */}
