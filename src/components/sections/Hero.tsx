@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 
 import { CTA, SITE } from "@/lib/constants";
@@ -20,17 +19,18 @@ import { CTA, SITE } from "@/lib/constants";
  *  - Poster: `public/brand/bacara-hero-poster.jpg` — first frame at t=1s, used while
  *    the video is decoding so there's no flash of background color on cold load.
  *
- * Mobile fallback (per docs/implementation-plan.md §2.1): the 6.9 MB MP4 is
- * heavy for cellular ad traffic, so the `<video>` element is NOT rendered at
- * all on mobile — it's conditionally mounted only after a matchMedia check
- * confirms the viewport is >=768 px. CSS `display: none` is not enough
- * because Chrome still downloads the `<source>` regardless of CSS
- * visibility; conditional rendering is the only way to fully suppress the
- * MP4 fetch on cellular ad traffic. Phones render the poster via `next/image`.
+ * Mobile: the video autoplays on phones too. The earlier desktop-only gate
+ * was removed at client request — the streaming-nightclub positioning depends
+ * on the hero motion being visible on the same device the ads are clicked on.
+ * The poster still renders first as the LCP candidate via `next/image`
+ * priority, so the initial paint is identical to the previous desktop-only
+ * behavior; the 6.9 MB MP4 then streams in on top once decoded.
  *
  * The video element uses `autoPlay muted loop playsInline` for cross-browser
  * autoplay (Safari and iOS require all four attributes for inline mute autoplay
- * to be allowed without user interaction).
+ * to be allowed without user interaction). `preload="metadata"` is kept so we
+ * don't force the full MP4 into the initial-load waterfall — Chrome/Safari
+ * will start the body download once autoplay kicks in, which is fine on LTE+.
  *
  * Foreground text uses Framer entry animations on mount — except for the h1,
  * which paints statically. The h1 is the LCP candidate for this page: wrapping
@@ -45,7 +45,6 @@ import { CTA, SITE } from "@/lib/constants";
  */
 export function Hero() {
   const prefersReducedMotion = useReducedMotion();
-  const showVideo = useDesktopOnlyVideo();
 
   const textInitial = prefersReducedMotion
     ? { opacity: 0 }
@@ -71,23 +70,20 @@ export function Hero() {
         aria-hidden="true"
       />
 
-      {/* Desktop-only video — conditionally mounted AFTER hydration once
-          matchMedia confirms viewport >=768px. Prevents the 6.9 MB MP4 from
-          being downloaded on mobile ad traffic. */}
-      {showVideo && (
-        <video
-          className="pointer-events-none absolute inset-0 -z-20 h-full w-full object-cover"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="metadata"
-          poster="/brand/bacara-hero-poster.jpg"
-          aria-hidden="true"
-        >
-          <source src="/brand/bacara-hero.mp4" type="video/mp4" />
-        </video>
-      )}
+      {/* Hero video — autoplays on every viewport including mobile. The poster
+          above still paints first (priority-loaded) so LCP is unaffected. */}
+      <video
+        className="pointer-events-none absolute inset-0 -z-20 h-full w-full object-cover"
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="metadata"
+        poster="/brand/bacara-hero-poster.jpg"
+        aria-hidden="true"
+      >
+        <source src="/brand/bacara-hero.mp4" type="video/mp4" />
+      </video>
 
       {/*
        * Radial scrim — darker in the center where the text sits, lighter at
@@ -165,21 +161,3 @@ export function Hero() {
   );
 }
 
-/**
- * Returns true only after the client has hydrated AND the viewport is
- * >=768 px. SSR + mobile first-render always returns false so the server
- * HTML contains no `<video>` element and Chrome never kicks off the 6.9 MB
- * MP4 download on cellular. On desktop the video appears one tick after
- * hydration, which is visually covered by the poster image behind it.
- */
-function useDesktopOnlyVideo(): boolean {
-  const [enabled, setEnabled] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia("(min-width: 768px)");
-    const update = () => setEnabled(mq.matches);
-    update();
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, []);
-  return enabled;
-}
