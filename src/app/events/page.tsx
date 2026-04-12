@@ -104,13 +104,13 @@ function EventCard({ event }: { event: UpcomingEvent }) {
         <div className="flex gap-2">
           <Link
             href={`/events/${event.slug}`}
-            className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-border px-4 py-2.5 text-xs font-medium text-fg-muted transition-colors hover:border-accent hover:text-accent"
+            className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-full border border-border px-4 py-2.5 text-xs font-medium text-fg-muted transition-colors hover:border-accent hover:text-accent"
           >
             Details
           </Link>
           <Link
             href={`/reserve?event=${event.slug}`}
-            className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-accent/60 px-4 py-2.5 text-xs font-medium text-accent transition-colors hover:bg-accent hover:text-bg"
+            className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-full border border-accent/60 px-4 py-2.5 text-xs font-medium text-accent transition-colors hover:bg-accent hover:text-bg"
           >
             Reserve
             <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />

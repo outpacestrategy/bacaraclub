@@ -81,7 +81,9 @@ export function Header() {
           <button
             type="button"
             onClick={() => setMenuOpen((v) => !v)}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full text-fg transition-colors hover:text-accent"
+            // 44×44 hit target: WCAG 2.5.5 AAA / Apple HIG minimum. The
+            // previous 40×40 failed that bar on mobile audits.
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full text-fg transition-colors hover:text-accent"
             aria-expanded={menuOpen}
             aria-controls="primary-menu"
             aria-label={menuOpen ? "Close menu" : "Open menu"}
@@ -104,7 +106,12 @@ export function Header() {
         <Link
           href="/"
           onClick={closeMenu}
-          className="group justify-self-center"
+          // `py-2 -my-2` grows the tap area vertically to meet the 44px
+          // WCAG minimum without changing the visual height of the
+          // wordmark or the header row. Negative margin pulls the extra
+          // padding back into the header's 16px row so the layout
+          // doesn't shift.
+          className="group justify-self-center -my-2 py-2"
           aria-label={`${SITE.name} — home`}
         >
           <Image

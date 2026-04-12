@@ -114,15 +114,22 @@ export function UpcomingEvents() {
           </div>
 
           {/* Indicator dots — one per PAGE, not per slide. Math.ceil so a
-              non-divisible number of slides still gets a final partial page. */}
-          <Carousel.IndicatorGroup className="mt-8 flex justify-center gap-2">
+              non-divisible number of slides still gets a final partial page.
+              Each indicator wraps an invisible 44px tap target around the
+              1px visual bar via `py-5 -my-3.5` so thumbs can actually hit
+              them on mobile without changing the 8px gap between visible
+              dots. The IndicatorGroup compensates with `-mt-3.5` so the
+              section spacing stays 32px. */}
+          <Carousel.IndicatorGroup className="mt-4 flex justify-center gap-2">
             {Array.from({ length: pageCount }).map((_, i) => (
               <Carousel.Indicator
                 key={i}
                 index={i}
                 aria-label={`Go to page ${i + 1}`}
-                className="h-1 w-8 cursor-pointer rounded-full bg-border transition-colors hover:bg-fg-muted data-[current]:bg-accent"
-              />
+                className="group relative flex min-h-11 w-11 cursor-pointer items-center justify-center"
+              >
+                <span className="h-1 w-8 rounded-full bg-border transition-colors group-hover:bg-fg-muted group-data-[current]:bg-accent" />
+              </Carousel.Indicator>
             ))}
           </Carousel.IndicatorGroup>
         </Carousel.Root>
@@ -241,7 +248,9 @@ function EventCard({
 
         <Link
           href={`/reserve?event=${event.slug}`}
-          className="mt-auto inline-flex w-full items-center justify-center gap-2 rounded-full border border-accent/60 px-5 py-2.5 text-sm font-medium text-accent transition-colors hover:bg-accent hover:text-bg"
+          // min-h-11 enforces a 44px tap target even when the caller's
+          // line-height + padding otherwise sum to 42px (previous value).
+          className="mt-auto inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-accent/60 px-5 py-3 text-sm font-medium text-accent transition-colors hover:bg-accent hover:text-bg"
         >
           Reserve
           <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />

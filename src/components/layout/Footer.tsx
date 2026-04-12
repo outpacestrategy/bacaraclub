@@ -72,7 +72,7 @@ export function Footer() {
               href={SITE.instagram}
               target="_blank"
               rel="noreferrer noopener"
-              className="mt-6 inline-flex items-center gap-2 text-sm text-fg-muted transition-colors hover:text-accent"
+              className="mt-5 inline-flex min-h-11 items-center gap-2 text-sm text-fg-muted transition-colors hover:text-accent"
             >
               <InstagramIcon className="h-4 w-4" />
               {SITE.instagramHandle}
@@ -104,7 +104,7 @@ export function Footer() {
               <p className="text-fg-subtle">{VENUE.hoursHuman}</p>
               <Link
                 href={`mailto:${VENUE.email}`}
-                className="inline-flex items-center gap-2 text-fg-muted transition-colors hover:text-accent"
+                className="inline-flex min-h-11 items-center gap-2 text-fg-muted transition-colors hover:text-accent"
               >
                 <Mail className="h-4 w-4" aria-hidden="true" />
                 {VENUE.email}
@@ -113,7 +113,7 @@ export function Footer() {
 
             <Link
               href={CTA.reserve.href}
-              className="mt-6 inline-flex w-full items-center justify-center rounded-full border border-accent bg-accent px-5 py-2.5 text-sm font-medium text-bg transition-colors hover:bg-accent-hover md:w-auto"
+              className="mt-6 inline-flex min-h-11 w-full items-center justify-center rounded-full border border-accent bg-accent px-5 py-3 text-sm font-medium text-bg transition-colors hover:bg-accent-hover md:w-auto"
             >
               {CTA.reserve.label}
             </Link>
@@ -153,12 +153,17 @@ function FooterColumn({
   return (
     <div>
       <h3 className="font-[family-name:var(--font-display)] text-lg text-fg">{title}</h3>
-      <ul className="mt-4 space-y-2.5">
+      {/* space-y-0 (was 2.5) because the per-link py-2 below already
+          provides vertical rhythm, and stacking margin + padding would
+          bloat the footer column. Each link is an inline-block min-h-11
+          hit target — the visual text height is still just the 17px
+          line, but thumb taps anywhere in the 44px row register. */}
+      <ul className="mt-3 space-y-0">
         {links.map((link) => (
           <li key={link.href}>
             <Link
               href={link.href}
-              className="text-sm text-fg-muted transition-colors hover:text-accent"
+              className="inline-flex min-h-11 items-center text-sm text-fg-muted transition-colors hover:text-accent"
             >
               {link.label}
             </Link>

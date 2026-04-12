@@ -7,6 +7,7 @@ import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 import { MetaPixel } from "@/components/analytics/MetaPixel";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { MobileStickyCTA } from "@/components/layout/MobileStickyCTA";
 import { SITE } from "@/lib/constants";
 
 /*
@@ -156,6 +157,11 @@ export default function RootLayout({
         <Header />
         <main className="flex-1">{children}</main>
         <Footer />
+        {/*
+         * Mobile sticky Reserve/Guest List bar — sub-sm only, self-hides on
+         * /reserve. P0 per docs/site-plan.md + implementation-plan §2.6.
+         */}
+        <MobileStickyCTA />
       </body>
     </html>
   );

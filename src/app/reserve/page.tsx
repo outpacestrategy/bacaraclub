@@ -543,7 +543,7 @@ function ReserveQuiz() {
             <button
               type="button"
               onClick={prev}
-              className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-xs text-fg-muted transition-colors hover:border-accent hover:text-accent"
+              className="inline-flex min-h-11 items-center gap-2 rounded-full border border-border px-4 py-2 text-xs text-fg-muted transition-colors hover:border-accent hover:text-accent"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
               Back
