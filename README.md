@@ -106,6 +106,25 @@ After the first production deploy:
 3. **GA4 DebugView** — confirm pageviews and custom events using the GA Debugger extension before turning on production reporting.
 4. **Google Business Profile** — follow `docs/google-business-strategy.md` for the claim + optimization sequence.
 
+## Hero video CDN (Cloudflare R2)
+
+The home page hero autoplays `public/brand/bacara-hero.mp4` (~7 MB, 720×1280 H.264). Serving that file from Netlify on every visit is the single largest bandwidth line item on this site — by an order of magnitude. To keep Netlify bandwidth credits free for actual SSR traffic, the MP4 is offloaded to **Cloudflare R2** in production. R2 has free egress to the public internet, so the video is effectively free to serve at any traffic volume.
+
+The `<video>` tag in `src/components/sections/Hero.tsx` reads `NEXT_PUBLIC_HERO_VIDEO_URL` and falls back to the committed local file if the env var is empty, so local dev and preview deploys work with zero setup.
+
+### One-time R2 setup
+
+1. **Create a bucket** — Cloudflare dashboard → R2 → *Create bucket* → name it `bacara-club-assets` (region: Automatic).
+2. **Enable public access** — Bucket → Settings → *Public access* → enable the `r2.dev` subdomain (fastest path) or bind a custom domain like `cdn.bacaraclub.com` via a CNAME.
+3. **Upload the video** — drag `public/brand/bacara-hero.mp4` into the bucket. Keep the filename identical so cache keys stay stable across re-uploads.
+4. **Set `Content-Type: video/mp4`** on the object (R2 usually infers this from the extension; double-check in the object metadata).
+5. **Set Cache-Control** on the object → `public, max-age=31536000, immutable`. Update the filename (e.g. append `-v2`) and the env var together whenever the video itself changes, since the URL is the cache key.
+6. **Copy the public URL** — something like `https://pub-<hash>.r2.dev/bacara-hero.mp4`, or your custom-domain equivalent.
+7. **Set the Netlify env var** — Site settings → Environment variables → `NEXT_PUBLIC_HERO_VIDEO_URL` = the R2 URL. Trigger a fresh deploy (the value is baked in at build time).
+8. **Verify** — open the deployed site, DevTools → Network → filter `.mp4`. The request domain should be R2, not Netlify. Response headers should include the year-long `Cache-Control`.
+
+Once verified, the local `public/brand/bacara-hero.mp4` can stay in the repo as a fallback — it's small enough that committing it costs nothing and it keeps dev self-contained. If storage in the repo ever becomes an issue, swap it for a placeholder poster frame.
+
 ## Open questions for the client
 
 Tracked in [`CLAUDE.md`](./CLAUDE.md) under "Open questions." Before Milestone 1, we need answers on: final domain, GBP ownership status after the acquisition, existing footage, email platform, phone number, and CRM timing.

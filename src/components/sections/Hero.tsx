@@ -82,7 +82,13 @@ export function Hero() {
         poster="/brand/bacara-hero-poster.jpg"
         aria-hidden="true"
       >
-        <source src="/brand/bacara-hero.mp4" type="video/mp4" />
+        <source
+          src={
+            process.env.NEXT_PUBLIC_HERO_VIDEO_URL ||
+            "/brand/bacara-hero.mp4"
+          }
+          type="video/mp4"
+        />
       </video>
 
       {/*
