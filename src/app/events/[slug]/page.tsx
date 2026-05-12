@@ -89,10 +89,7 @@ export default async function EventPage({ params }: PageProps) {
         title={event.title}
         description={event.description}
       >
-        <div
-          data-placeholder="true"
-          className="relative mb-14 overflow-hidden rounded-3xl border border-border bg-bg-elevated"
-        >
+        <div className="relative mb-14 overflow-hidden rounded-3xl border border-border bg-bg-elevated">
           <div className="relative aspect-[16/9] w-full">
             <Image
               src={event.heroImage}

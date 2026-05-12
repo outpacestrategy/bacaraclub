@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { Camera, Wifi, Radio, Users } from "lucide-react";
 
 import { PageShell } from "@/components/layout/PageShell";
 import { SITE, VENUE } from "@/lib/constants";
+import { LANDER_HERO } from "@/lib/media";
 
 export const metadata: Metadata = {
   title: "Streamer Program — Bacara Club Miami Beach",
@@ -26,6 +28,26 @@ export default function StreamersPage() {
       highlight="Miami"
       description="Bacara Club is the only Miami Beach nightclub built for creator broadcasting. Permanent rigs, creator lighting, fast wifi, and no filming rules — every table is a camera angle, every night is a broadcast."
     >
+      <div className="relative mb-14 overflow-hidden rounded-3xl border border-border bg-bg-elevated">
+        <div className="relative aspect-[16/9] w-full">
+          <Image
+            src={LANDER_HERO.streamers.src}
+            alt={LANDER_HERO.streamers.alt}
+            fill
+            priority
+            sizes="(min-width: 1024px) 960px, 100vw"
+            className="object-cover"
+          />
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 bg-gradient-to-t from-bg via-bg/30 to-transparent"
+          />
+        </div>
+        <p className="absolute bottom-4 left-5 right-5 text-balance text-xs uppercase tracking-[0.18em] text-fg-muted md:bottom-6 md:left-8 md:text-[11px]">
+          Live from the floor &middot; opening night
+        </p>
+      </div>
+
       <section className="mb-16">
         <h2 className="font-[family-name:var(--font-display)] text-3xl text-fg md:text-4xl">
           What we provide

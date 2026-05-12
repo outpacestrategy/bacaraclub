@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 
 import { PageShell } from "@/components/layout/PageShell";
 import { SITE, VENUE } from "@/lib/constants";
+import { LANDER_HERO } from "@/lib/media";
 
 export const metadata: Metadata = {
   title: "Private Events & Buyouts — Bacara Club Miami Beach",
@@ -25,6 +27,23 @@ export default function PrivatePage() {
       highlight="Afterparties"
       description="Bacara is available for private buyouts, corporate nights, album releases, artist afterparties, and creator takeovers. Full broadcast infrastructure included — film, stream, and host at the same time."
     >
+      <div className="relative mb-14 overflow-hidden rounded-3xl border border-border bg-bg-elevated">
+        <div className="relative aspect-[16/9] w-full">
+          <Image
+            src={LANDER_HERO.private.src}
+            alt={LANDER_HERO.private.alt}
+            fill
+            priority
+            sizes="(min-width: 1024px) 960px, 100vw"
+            className="object-cover"
+          />
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 bg-gradient-to-t from-bg via-bg/30 to-transparent"
+          />
+        </div>
+      </div>
+
       <div className="grid gap-8 md:grid-cols-2">
         <FormatCard
           title="Full Buyout"

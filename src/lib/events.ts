@@ -17,9 +17,8 @@
  *     Bacara operates overnight (10 PM → 5 AM) so `endDate` is the *next*
  *     calendar day. schema.org `Event.endDate` supports this form.
  *   - `slug` is URL-safe; it's the only identifier /events/[slug] resolves on.
- *   - `heroImage` is a path under `/public/` — replace with real imagery on
- *     launch. Until then we use the existing site hero poster so nothing
- *     fabricated (stock nightlife shots, picsum faces) ships to the event page.
+ *   - `heroImage` is a path under `/public/` to a 16:9 landscape crop encoded
+ *     by `scripts/encode-media.sh`. First-party only — no stock or picsum.
  *   - `offers` follows the Event-schema contract in implementation-plan.md §3.1.
  *     `priceSpecification.minPrice` is a directional range floor and maps to
  *     the same numbers rendered in the /wednesdays + /saturdays pricing block.
@@ -71,8 +70,8 @@ export const UPCOMING_EVENTS: readonly UpcomingEvent[] = [
     host: "Resident · TBD",
     startDate: "2026-04-11T22:00:00-04:00",
     endDate: "2026-04-12T05:00:00-04:00",
-    heroImage: "/brand/bacara-hero-poster.jpg",
-    heroAlt: "Bacara Club main room during a Saturday night broadcast.",
+    heroImage: "/media/opening-night/18-landscape.jpg",
+    heroAlt: "Bottle service moment at Bacara Club: guest raising two champagne bottles surrounded by bubble effects.",
     description:
       "Saturday night at Bacara Club — Miami Beach's first streaming nightclub. Resident DJ, bottle service, and a full broadcast of the room.",
     gradient: "from-accent/40 via-accent/5 to-transparent",
@@ -86,8 +85,8 @@ export const UPCOMING_EVENTS: readonly UpcomingEvent[] = [
     host: "Resident · TBD",
     startDate: "2026-04-15T22:00:00-04:00",
     endDate: "2026-04-16T05:00:00-04:00",
-    heroImage: "/brand/bacara-hero-poster.jpg",
-    heroAlt: "Bacara Club booth during a Wednesday night live broadcast.",
+    heroImage: "/media/opening-night/2-landscape.jpg",
+    heroAlt: "Packed dance floor at Bacara Club Miami Beach, raised hands and stage lighting.",
     description:
       "Wednesday night broadcast at Bacara Club on Miami Beach. Mid-week flagship, permanent camera rigs on the floor, and resident DJ.",
     gradient: "from-live/25 via-live/5 to-transparent",
@@ -101,8 +100,8 @@ export const UPCOMING_EVENTS: readonly UpcomingEvent[] = [
     host: "Guest · TBD",
     startDate: "2026-04-18T22:00:00-04:00",
     endDate: "2026-04-19T05:00:00-04:00",
-    heroImage: "/brand/bacara-hero-poster.jpg",
-    heroAlt: "Bacara Club crowd on a Saturday headline night.",
+    heroImage: "/media/opening-night/14-landscape.jpg",
+    heroAlt: "Bacara guests on a packed Saturday night dance floor.",
     description:
       "Bacara Presents — a headline Saturday at Miami Beach's first streaming nightclub. Guest DJ, bottle service, and the Bacara broadcast rig on air all night.",
     gradient: "from-purple-600/35 via-purple-600/5 to-transparent",
@@ -116,8 +115,8 @@ export const UPCOMING_EVENTS: readonly UpcomingEvent[] = [
     host: "Resident · TBD",
     startDate: "2026-04-22T22:00:00-04:00",
     endDate: "2026-04-23T05:00:00-04:00",
-    heroImage: "/brand/bacara-hero-poster.jpg",
-    heroAlt: "Bacara Club streamer table mid-broadcast on a Wednesday.",
+    heroImage: "/media/opening-night/6-landscape.jpg",
+    heroAlt: "Guests on the Bacara outdoor patio under festival lighting.",
     description:
       "Mid-week streaming night at Bacara Club Miami Beach. Creator tables, resident DJ, and the full broadcast rig live from 10 PM.",
     gradient: "from-emerald-600/30 via-emerald-600/5 to-transparent",
@@ -131,8 +130,8 @@ export const UPCOMING_EVENTS: readonly UpcomingEvent[] = [
     host: "Guest · TBD",
     startDate: "2026-04-25T22:00:00-04:00",
     endDate: "2026-04-26T05:00:00-04:00",
-    heroImage: "/brand/bacara-hero-poster.jpg",
-    heroAlt: "Bacara Club dance floor on a late spring Saturday.",
+    heroImage: "/media/opening-night/4-landscape.jpg",
+    heroAlt: "Guests in the outdoor cabana area at Bacara Club.",
     description:
       "Late spring Saturday at Bacara — Miami Beach's first streaming nightclub. Guest DJ and bottle service at every section.",
     gradient: "from-amber-600/35 via-amber-600/5 to-transparent",
@@ -146,8 +145,8 @@ export const UPCOMING_EVENTS: readonly UpcomingEvent[] = [
     host: "Streamer Takeover",
     startDate: "2026-04-29T22:00:00-04:00",
     endDate: "2026-04-30T05:00:00-04:00",
-    heroImage: "/brand/bacara-hero-poster.jpg",
-    heroAlt: "Bacara Club creator table during a Wednesday streamer takeover.",
+    heroImage: "/media/opening-night/11-landscape.jpg",
+    heroAlt: "Phone-on-gimbal rig live-streaming a Bacara performance from the floor.",
     description:
       "Streamer takeover Wednesday at Bacara — rotating creators broadcasting live from dedicated creator tables in the main room.",
     gradient: "from-sky-600/35 via-sky-600/5 to-transparent",

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Carousel } from "@ark-ui/react/carousel";
@@ -200,13 +201,20 @@ function EventCard({
       }}
       className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-bg-elevated transition-colors hover:border-accent/40"
     >
-      {/* Card cover — placeholder gradient until client supplies real imagery */}
+      {/* Card cover — first-party photograph; gradient stays as a fallback tint */}
       <div
         className={cn(
           "relative aspect-[4/5] overflow-hidden bg-gradient-to-br",
           event.gradient,
         )}
       >
+        <Image
+          src={event.heroImage}
+          alt={event.heroAlt}
+          fill
+          sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+          className="object-cover"
+        />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_100%_60%_at_50%_110%,rgba(0,0,0,0.8),transparent_70%)]" />
         <div className="absolute inset-x-6 top-6 flex items-start justify-between">
           <span

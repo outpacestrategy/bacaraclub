@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 
 import { PageShell } from "@/components/layout/PageShell";
 import { SITE } from "@/lib/constants";
+import { ABOUT_PORTRAITS } from "@/lib/media";
 
 export const metadata: Metadata = {
   title: "About Bacara Club — Miami Beach's Streaming Nightclub",
@@ -18,6 +20,27 @@ export default function AboutPage() {
       highlight="Broadcast"
       description="Bacara is a boutique nightclub at 235 23rd Street in Miami Beach. We were relaunched in 2026 by Clavicular as the first venue in the city built from the ground up for livestreaming — permanent camera rigs, creator lighting, no filming rules, and dedicated streamer tables every Wednesday and Saturday."
     >
+      <div className="mb-14 grid gap-4 sm:grid-cols-2">
+        <div className="relative aspect-[3/4] overflow-hidden rounded-3xl border border-border bg-bg-elevated">
+          <Image
+            src={ABOUT_PORTRAITS.host.src}
+            alt={ABOUT_PORTRAITS.host.alt}
+            fill
+            sizes="(min-width: 640px) 480px, 100vw"
+            className="object-cover"
+          />
+        </div>
+        <div className="relative aspect-[3/4] overflow-hidden rounded-3xl border border-border bg-bg-elevated">
+          <Image
+            src={ABOUT_PORTRAITS.venue.src}
+            alt={ABOUT_PORTRAITS.venue.alt}
+            fill
+            sizes="(min-width: 640px) 480px, 100vw"
+            className="object-cover"
+          />
+        </div>
+      </div>
+
       <div className="space-y-8 text-base leading-relaxed text-fg-muted md:text-lg">
         <section>
           <h2 className="font-[family-name:var(--font-display)] text-3xl text-fg">

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
@@ -8,6 +9,7 @@ import { ReservationChannels } from "@/components/sections/ReservationChannels";
 import { EventSchema } from "@/components/seo/EventSchema";
 import { SITE, VENUE } from "@/lib/constants";
 import { getUpcomingEventsByNight } from "@/lib/events";
+import { LANDER_HERO } from "@/lib/media";
 
 export const metadata: Metadata = {
   title: "Wednesday Nights at Bacara — Miami Beach",
@@ -53,6 +55,23 @@ export default function WednesdaysPage() {
       {wednesdayEvents.map((event) => (
         <EventSchema key={event.slug} event={event} />
       ))}
+
+      <div className="relative mb-14 overflow-hidden rounded-3xl border border-border bg-bg-elevated">
+        <div className="relative aspect-[16/9] w-full">
+          <Image
+            src={LANDER_HERO.wednesdays.src}
+            alt={LANDER_HERO.wednesdays.alt}
+            fill
+            priority
+            sizes="(min-width: 1024px) 960px, 100vw"
+            className="object-cover"
+          />
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 bg-gradient-to-t from-bg via-bg/30 to-transparent"
+          />
+        </div>
+      </div>
 
       <section className="mb-16">
         <h2 className="font-[family-name:var(--font-display)] text-3xl text-fg md:text-4xl">
